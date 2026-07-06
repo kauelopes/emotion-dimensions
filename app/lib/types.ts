@@ -18,6 +18,18 @@ export interface EmotionPoints {
   /** [valence, arousal, dominance] in [0,1], index-aligned with terms. */
   vad: Vec3[];
   models: Record<string, ModelPoints>;
+  /** Out-of-fold ridge-probe readings (minmax [0,1]), aligned with terms. */
+  probe: {
+    model: string;
+    predV: (number | null)[];
+    predA: (number | null)[];
+  };
+}
+
+export interface Neighbors {
+  model: string;
+  /** Cosine distance matrix, index-aligned with EmotionPoints.terms. */
+  distance: number[][];
 }
 
 export interface DimensionalityRow {

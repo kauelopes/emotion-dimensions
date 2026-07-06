@@ -18,6 +18,9 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
+  // basePath is prepended to the opengraph-image route automatically,
+  // so metadataBase must stay at the domain root
+  metadataBase: new URL("https://kauelopes.github.io"),
   title: "How many dimensions does emotion have?",
   description:
     "What the geometry of pretrained embeddings says about the structure of the emotion lexicon — an interactive tour of the method and findings.",

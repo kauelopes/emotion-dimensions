@@ -2,18 +2,19 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion";
 import { Scene } from "@/components/Scene";
 import { ScrollProgressScene } from "@/components/ScrollProgressScene";
 import { TheoryCards } from "@/components/TheoryCards";
 import { VocabularyWall } from "@/components/VocabularyWall";
 import { EmotionMap2D } from "@/components/EmotionMap2D";
+import { PipelineStepper } from "@/components/PipelineStepper";
+import { SemanticWalk } from "@/components/SemanticWalk";
 import { DimensionalityChart } from "@/components/charts/DimensionalityChart";
 import { R2BarChart } from "@/components/charts/R2BarChart";
 import { SilhouetteStrip } from "@/components/charts/SilhouetteStrip";
 import { withBase } from "@/lib/paths";
-import type { EmotionPoints, Stats } from "@/lib/types";
+import type { EmotionPoints, Neighbors, Stats } from "@/lib/types";
 import { strings } from "@/content/strings";
 
 const EmotionCloud3D = dynamic(() => import("@/components/EmotionCloud3D"), {
@@ -24,6 +25,17 @@ const ValenceMorph3D = dynamic(() => import("@/components/ValenceMorph3D"), {
   ssr: false,
   loading: () => <Placeholder3D height={480} />,
 });
+const ModelMorph3D = dynamic(() => import("@/components/ModelMorph3D"), {
+  ssr: false,
+  loading: () => <Placeholder3D height={480} />,
+});
+
+const STABILITY_MODELS = [
+  "word2vec",
+  "bert-base-template",
+  "bge-m3",
+  "openai-3-large",
+];
 
 function Placeholder3D({ height }: { height: number }) {
   return (
@@ -47,16 +59,19 @@ export function Story() {
 
   const [points, setPoints] = useState<EmotionPoints | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [neighbors, setNeighbors] = useState<Neighbors | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
       fetch(withBase("/data/emotion_points.json")).then((r) => r.json()),
       fetch(withBase("/data/stats.json")).then((r) => r.json()),
+      fetch(withBase("/data/neighbors.json")).then((r) => r.json()),
     ])
-      .then(([p, s]) => {
+      .then(([p, s, n]) => {
         setPoints(p);
         setStats(s);
+        setNeighbors(n);
       })
       .catch((e) => setError(String(e)));
   }, []);
@@ -166,15 +181,9 @@ export function Story() {
                 ))}
               </div>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-white/95 p-3">
-              <Image
-                src="/figures/fig2_pipeline.png"
-                alt="Diagram of the analysis pipeline: emotion vocabularies feed twelve embedding models, whose vectors are analyzed for dimensionality, interpretability and clustering."
-                width={1200}
-                height={700}
-                className="h-auto w-full rounded-xl"
-              />
-              <div className="px-2 pt-2 pb-1 text-xs text-zinc-600">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+              <PipelineStepper />
+              <div className="pt-4 text-xs text-zinc-600">
                 {s.pipeline.caption}
               </div>
             </div>
@@ -195,7 +204,7 @@ export function Story() {
           </div>
         </Scene>
 
-        {/* 05 — valence morph (scroll-driven) */}
+        {/* 05 — valence morph (scroll-driven, probe readout) */}
         <ScrollProgressScene step={5} title={s.morph.title}>
           {(p) => {
             const progress = reducedMotion ? 1 : Math.min(1, p / 0.72);
@@ -204,7 +213,16 @@ export function Story() {
             return (
               <div className="mt-2">
                 {points ? (
-                  <ValenceMorph3D data={points} progress={progress} height={480} />
+                  <ValenceMorph3D
+                    data={points}
+                    model={points.probe.model}
+                    dim="v"
+                    target={points.probe.predV}
+                    axisNeg={s.morph.axisNeg}
+                    axisPos={s.morph.axisPos}
+                    progress={progress}
+                    height={480}
+                  />
                 ) : (
                   <Placeholder3D height={480} />
                 )}
@@ -216,8 +234,38 @@ export function Story() {
           }}
         </ScrollProgressScene>
 
-        {/* 06 — arousal fails */}
-        <Scene id="arousal" step={6} title={s.arousal.title}>
+        {/* 06 — arousal morph: same probe, shuffled colors */}
+        <ScrollProgressScene step={6} title={s.morphArousal.title}>
+          {(p) => {
+            const progress = reducedMotion ? 1 : Math.min(1, p / 0.72);
+            const stage =
+              progress < 0.33 ? 0 : progress < 0.8 ? 1 : 2;
+            return (
+              <div className="mt-2">
+                {points ? (
+                  <ValenceMorph3D
+                    data={points}
+                    model={points.probe.model}
+                    dim="a"
+                    target={points.probe.predA}
+                    axisNeg={s.morphArousal.axisNeg}
+                    axisPos={s.morphArousal.axisPos}
+                    progress={progress}
+                    height={480}
+                  />
+                ) : (
+                  <Placeholder3D height={480} />
+                )}
+                <p className="mt-4 min-h-[3.5rem] max-w-3xl text-sm leading-relaxed text-zinc-300">
+                  {s.morphArousal.stages[stage]}
+                </p>
+              </div>
+            );
+          }}
+        </ScrollProgressScene>
+
+        {/* 07 — the numbers behind it */}
+        <Scene id="arousal" step={7} title={s.arousal.title}>
           <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.arousal.text}
           </p>
@@ -233,8 +281,42 @@ export function Story() {
           </p>
         </Scene>
 
-        {/* 07 — gradients not clusters */}
-        <Scene id="gradients" step={7} title={s.gradients.title}>
+        {/* 08 — stability across models */}
+        <ScrollProgressScene step={8} title={s.stability.title}>
+          {(p) => {
+            const progress = reducedMotion ? 1 : Math.min(1, p / 0.85);
+            const stage = Math.min(
+              s.stability.stages.length - 1,
+              Math.floor(progress * s.stability.stages.length),
+            );
+            return (
+              <div className="mt-2">
+                {points ? (
+                  <ModelMorph3D
+                    data={points}
+                    models={STABILITY_MODELS}
+                    progress={progress}
+                    height={480}
+                  />
+                ) : (
+                  <Placeholder3D height={480} />
+                )}
+                <div className="mt-3 flex items-center justify-between gap-4">
+                  <p className="min-h-[3.5rem] max-w-3xl text-sm leading-relaxed text-zinc-300">
+                    {s.stability.stages[stage]}
+                  </p>
+                  <span className="shrink-0 font-mono text-xs text-zinc-600">
+                    {points?.models[STABILITY_MODELS[Math.min(3, Math.round(progress * 3))]]?.pretty}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-zinc-600">{s.stability.caption}</p>
+              </div>
+            );
+          }}
+        </ScrollProgressScene>
+
+        {/* 09 — gradients not clusters + semantic walk */}
+        <Scene id="gradients" step={9} title={s.gradients.title}>
           <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
             <p className="text-sm leading-relaxed text-zinc-300">
               {s.gradients.text}
@@ -247,10 +329,23 @@ export function Story() {
               )}
             </div>
           </div>
+          <div className="mt-8">
+            <h3 className="text-lg" style={{ fontFamily: "var(--font-lora, serif)", color: "var(--accent)" }}>
+              {s.walk.title}
+            </h3>
+            <p className="mt-2 mb-4 max-w-3xl text-sm leading-relaxed text-zinc-300">
+              {s.walk.text}
+            </p>
+            {points && neighbors ? (
+              <SemanticWalk data={points} neighbors={neighbors} />
+            ) : (
+              <div className="text-xs text-zinc-600">loading…</div>
+            )}
+          </div>
         </Scene>
 
-        {/* 08 — explore */}
-        <Scene id="explore" step={8} title={s.explore.title}>
+        {/* 10 — explore */}
+        <Scene id="explore" step={10} title={s.explore.title}>
           <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.explore.text}
           </p>
@@ -261,8 +356,8 @@ export function Story() {
           )}
         </Scene>
 
-        {/* 09 — about */}
-        <Scene id="about" step={9} title={s.about.title}>
+        {/* 11 — about */}
+        <Scene id="about" step={11} title={s.about.title}>
           <p className="max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.about.text}
           </p>

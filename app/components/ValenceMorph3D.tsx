@@ -5,8 +5,8 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Line, Text } from "@react-three/drei";
 import { useMemo, useRef } from "react";
 import { divergingGl } from "@/lib/colors";
-import type { EmotionPoints } from "@/lib/types";
-import { strings } from "@/content/strings";
+import type { EmotionPoints, VadDim } from "@/lib/types";
+import { VAD_INDEX } from "@/lib/types";
 
 const SCALE = 1.5;
 const RULER = 3.4;
@@ -30,8 +30,24 @@ export default function ValenceMorph3D(props: {
   model?: string;
   progress: number; // 0..1 (scroll-driven)
   height?: number;
+  /** human rating that colors the points */
+  dim?: VadDim;
+  /** collapse target per term in [0,1] (probe reading), aligned with terms;
+      falls back to the human rating when omitted */
+  target?: (number | null)[];
+  axisNeg?: string;
+  axisPos?: string;
 }) {
-  const { data, model = "bge-m3", progress, height = 480 } = props;
+  const {
+    data,
+    model = "bge-m3",
+    progress,
+    height = 480,
+    dim = "v",
+    target,
+    axisNeg = "negative",
+    axisPos = "positive",
+  } = props;
   const t = smoothstep(progress);
 
   return (
@@ -45,15 +61,23 @@ export default function ValenceMorph3D(props: {
       >
         <color attach="background" args={["#111113"]} />
         <ambientLight intensity={1.2} />
-        <MorphPoints data={data} model={model} t={t} />
-        <ValenceAxis t={t} />
+        <MorphPoints data={data} model={model} t={t} dim={dim} target={target} />
+        <RulerAxis t={t} axisNeg={axisNeg} axisPos={axisPos} />
         <OrbitControls makeDefault enableDamping dampingFactor={0.08} enableZoom={false} />
       </Canvas>
     </div>
   );
 }
 
-function ValenceAxis({ t }: { t: number }) {
+function RulerAxis({
+  t,
+  axisNeg,
+  axisPos,
+}: {
+  t: number;
+  axisNeg: string;
+  axisPos: string;
+}) {
   const alpha = Math.max(0, (t - 0.6) / 0.4);
   const linePts = useMemo(
     () => [new THREE.Vector3(-RULER / 2, 0, 0), new THREE.Vector3(RULER / 2, 0, 0)],
@@ -70,7 +94,7 @@ function ValenceAxis({ t }: { t: number }) {
         fillOpacity={alpha}
         anchorX="right"
       >
-        {strings.morph.axisNeg}
+        {axisNeg}
       </Text>
       <Text
         position={[RULER / 2 + 0.15, 0, 0]}
@@ -79,7 +103,7 @@ function ValenceAxis({ t }: { t: number }) {
         fillOpacity={alpha}
         anchorX="left"
       >
-        {strings.morph.axisPos}
+        {axisPos}
       </Text>
     </group>
   );
@@ -89,19 +113,26 @@ function MorphPoints({
   data,
   model,
   t,
+  dim,
+  target,
 }: {
   data: EmotionPoints;
   model: string;
   t: number;
+  dim: VadDim;
+  target?: (number | null)[];
 }) {
   const geomRef = useRef<THREE.BufferGeometry>(null);
 
   const { basePos, rulerPos, colors, geometry } = useMemo(() => {
     const m = data.models[model];
-    const rows: { xyz: [number, number, number]; v: number }[] = [];
+    const di = VAD_INDEX[dim];
+    const rows: { xyz: [number, number, number]; v: number; tx: number }[] = [];
     m.xyz.forEach((row, i) => {
       if (!row) return;
-      rows.push({ xyz: row, v: data.vad[i][0] });
+      const tx = target ? target[i] : data.vad[i][di];
+      if (tx == null) return;
+      rows.push({ xyz: row, v: data.vad[i][di], tx });
     });
     const n = rows.length;
     const pos0 = new Float32Array(n * 3);
@@ -111,8 +142,8 @@ function MorphPoints({
       pos0[i * 3] = r.xyz[0] * SCALE;
       pos0[i * 3 + 1] = r.xyz[1] * SCALE;
       pos0[i * 3 + 2] = r.xyz[2] * SCALE;
-      // target: valence ruler, with slight jitter for thickness
-      pos1[i * 3] = (r.v - 0.5) * RULER;
+      // ruler position: where the linear probe reads this word
+      pos1[i * 3] = (r.tx - 0.5) * RULER;
       pos1[i * 3 + 1] = (hash01(i) - 0.5) * 0.16;
       pos1[i * 3 + 2] = (hash01(i * 7 + 3) - 0.5) * 0.1;
       const [cr, cg, cb] = divergingGl(r.v);
@@ -126,7 +157,7 @@ function MorphPoints({
     g.setAttribute("color", new THREE.BufferAttribute(col, 3));
     g.computeBoundingSphere();
     return { basePos: pos0, rulerPos: pos1, colors: col, geometry: g };
-  }, [data, model]);
+  }, [data, model, dim, target]);
 
   void colors;
 
