@@ -228,6 +228,9 @@ export function Story() {
               <div className="text-xs text-zinc-600">loading…</div>
             )}
           </div>
+          <p className="mt-4 max-w-3xl text-xs leading-relaxed text-zinc-500">
+            {s.arousal.note}
+          </p>
         </Scene>
 
         {/* 07 — gradients not clusters */}

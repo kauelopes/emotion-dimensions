@@ -95,6 +95,7 @@ export const strings = {
     text: "Here is the surprise. Valence is written all over embedding space — but arousal, the second axis of every classical theory, is essentially unrecoverable. Linear probes score near zero (often below zero: worse than predicting the mean) in every model, replicating a puzzle first noted by Hollis & Westbury (2016). Dominance sits in between. Whatever the ~10–15 dimensions encode, the calm-to-activated axis is not linearly among them: language use apparently tells us how good a feeling is, but not how loud.",
     legend: { v: "valence", d: "dominance", a: "arousal" },
     zeroNote: "0 = no better than guessing the mean",
+    note: "A note on reading the negative bars: R² is not a correlation, so a negative value does not mean \"arousal is there, just flipped\" — regression is indifferent to sign and would recover a flipped axis perfectly well. R² below zero means the probe predicts arousal worse than simply guessing the average rating for every word: the linear signal is absent, not inverted.",
   },
   gradients: {
     step: "07",
