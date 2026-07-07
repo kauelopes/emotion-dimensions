@@ -136,10 +136,20 @@ export interface ConsensusAxisRow {
   r: Record<GridDim, number>;
 }
 
+export interface ConsensusPoint {
+  t: string;
+  /** GPA consensus coordinates: x = axis c1, y = axis c2. */
+  x: number;
+  y: number;
+  /** Mean per-term distance to consensus across spaces (disagreement). */
+  disp: number;
+}
+
 export interface Stats {
   neutralControl: NeutralControlRow[];
   consensusAxes: ConsensusAxisRow[];
   consensusAxesModelsOnly: ConsensusAxisRow[];
+  consensusModelsOnly: ConsensusPoint[];
   dimensionality: DimensionalityRow[];
   interpretation: InterpretationRow[];
   clustering: ClusteringRow[];

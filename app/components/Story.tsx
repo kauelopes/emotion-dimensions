@@ -23,7 +23,11 @@ import { GpaConsensus } from "@/components/charts/GpaConsensus";
 import { CeilingChart, CalibrationStrip } from "@/components/charts/CeilingChart";
 import { ProcrustesDemo } from "@/components/charts/ProcrustesDemo";
 import { SilhouetteStrip } from "@/components/charts/SilhouetteStrip";
-import { AxisMatchGrid, DimensionPairStrip } from "@/components/charts/AnswerCharts";
+import {
+  AxisMatchGrid,
+  DimensionPairStrip,
+  ModelsConsensusMap,
+} from "@/components/charts/AnswerCharts";
 import { withBase } from "@/lib/paths";
 import type { CrossSpace, EmotionPoints, Neighbors, Stats } from "@/lib/types";
 import { strings } from "@/content/strings";
@@ -566,6 +570,17 @@ export function Story() {
                   )}
                 </div>
               </div>
+              <p className="mt-8 mb-4 max-w-3xl text-sm leading-relaxed text-zinc-300">
+                {s.answers.q2.mapLead}
+              </p>
+              {stats && points ? (
+                <ModelsConsensusMap
+                  rows={stats.consensusModelsOnly}
+                  points={points}
+                />
+              ) : (
+                <div className="text-xs text-zinc-600">loading…</div>
+              )}
             </div>
             {/* Q3 — clusters vs gradients */}
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">

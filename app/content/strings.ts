@@ -222,6 +222,12 @@ export const strings = {
       text: "Align all fourteen spaces and average them into a consensus: its four axes match the GRID's four dimensions one to one — valence r = +0.79, power +0.82, novelty −0.73, arousal −0.64 — each axis claiming a different dimension as its best partner (the ring in each row). And this is not the GRID grading its own homework: rebuild the consensus from the twelve models alone, with no human norm in the mix, and the one-to-one match survives almost unchanged (+0.74 / +0.77 / −0.68 / −0.56 — hover any cell). Arousal is the weakest pairing, and the one whose strength depends on which instrument measures it.",
       caption:
         "Pearson r between each consensus axis (rows) and each GRID dimension (columns), 77 shared terms; signs are arbitrary in a GPA. Ring = best match per axis · hover a cell for the models-only value.",
+      mapLead:
+        "And here is that merged model itself — the twelve embedding spaces aligned and averaged into one map of 77 words, no human norm involved. Its first two axes are plotted below; nobody told the consensus what they should mean, yet the words sort themselves from unpleasant to pleasant along one and from powerless to powerful along the other. Point size is how much the twelve models disagree about a word: the tight small dots (guilt, grief, despair) are where every model draws the same map.",
+      mapAxisX: "axis c1 — empirically: valence (r = +0.74) →",
+      mapAxisY: "↑ axis c2 — empirically: power (r = +0.77)",
+      mapHint:
+        "the models-only GPA consensus (77 terms) · color = human valence rating · point size = disagreement between the 12 models · hover a point",
     },
     q3: {
       q: "Clusters or gradients?",
