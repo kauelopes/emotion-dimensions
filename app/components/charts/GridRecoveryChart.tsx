@@ -45,10 +45,16 @@ export function GridRecoveryChart({ rows }: { rows: GridRecoveryRow[] }) {
 
         {rows.map((r, gi) => {
           const gy = TOP + gi * GROUP_H;
+          const isConsensus = r.family === "consensus";
           return (
             <g key={r.model}>
+              {isConsensus && (
+                <line x1={16} y1={gy} x2={W - 16} y2={gy}
+                  stroke="#3f3f46" strokeWidth="1" strokeDasharray="4 3" />
+              )}
               <text x={LEFT - 8} y={gy + GROUP_H / 2 + 1} textAnchor="end"
-                fontSize="10" fill="#d4d4d8">{r.pretty}</text>
+                fontSize="10" fill={isConsensus ? "var(--accent)" : "#d4d4d8"}
+                fontWeight={isConsensus ? 600 : 400}>{r.pretty}</text>
               {DIMS.map((d, di) => {
                 const v = r[d.key];
                 const y = gy + 4 + di * (BAR_H + 2);

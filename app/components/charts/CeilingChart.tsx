@@ -50,9 +50,16 @@ export function CeilingChart({ cross }: { cross: CrossSpace }) {
 
         {rows.map((r, i) => {
           const y = TOP + i * ROW_H + ROW_H / 2;
+          const isConsensus = r.model === "machine-consensus";
           return (
             <g key={r.model}>
-              <text x={LEFT - 8} y={y + 3} textAnchor="end" fontSize="10" fill="#d4d4d8">
+              {isConsensus && (
+                <rect x={12} y={y - ROW_H / 2 + 2} width={W - 24} height={ROW_H - 4}
+                  fill="var(--accent)" opacity="0.07" rx="4" />
+              )}
+              <text x={LEFT - 8} y={y + 3} textAnchor="end" fontSize="10"
+                fill={isConsensus ? "var(--accent)" : "#d4d4d8"}
+                fontWeight={isConsensus ? 600 : 400}>
                 {r.pretty}
               </text>
               {/* vs NRC-VAD: gray square */}

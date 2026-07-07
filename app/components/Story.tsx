@@ -275,7 +275,10 @@ export function Story() {
           </p>
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
             {stats ? (
-              <DimensionalityChart rows={stats.dimensionality} />
+              <DimensionalityChart
+                rows={[...stats.dimensionality,
+                       stats.machineConsensus.dimensionality]}
+              />
             ) : (
               <div className="text-xs text-zinc-600">loading…</div>
             )}
@@ -351,7 +354,10 @@ export function Story() {
           </p>
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
             {stats ? (
-              <GridRecoveryChart rows={stats.gridRecovery} />
+              <GridRecoveryChart
+                rows={[...stats.gridRecovery,
+                       stats.machineConsensus.gridRecovery]}
+              />
             ) : (
               <div className="text-xs text-zinc-600">loading…</div>
             )}

@@ -43,9 +43,16 @@ export function DimensionalityChart({ rows }: { rows: DimensionalityRow[] }) {
           const y = TOP + i * ROW_H + ROW_H / 2;
           const lo = Math.min(r.parallelAnalysis, r.twonn, r.mle);
           const hi = Math.max(r.parallelAnalysis, r.twonn, r.mle);
+          const isConsensus = r.family === "consensus";
           return (
             <g key={r.model}>
-              <text x={LEFT - 8} y={y + 3} textAnchor="end" fontSize="10" fill="#d4d4d8">
+              {isConsensus && (
+                <line x1={16} y1={y - ROW_H / 2} x2={W - 16} y2={y - ROW_H / 2}
+                  stroke="#3f3f46" strokeWidth="1" strokeDasharray="4 3" />
+              )}
+              <text x={LEFT - 8} y={y + 3} textAnchor="end" fontSize="10"
+                fill={isConsensus ? "var(--accent)" : "#d4d4d8"}
+                fontWeight={isConsensus ? 600 : 400}>
                 {r.pretty}
               </text>
               <line x1={sx(lo)} y1={y} x2={sx(hi)} y2={y} stroke="#52525b" strokeWidth="1" />

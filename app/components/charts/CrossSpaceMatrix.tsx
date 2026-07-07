@@ -13,6 +13,7 @@ const FAMILY_COLOR: Record<string, string> = {
   contextual: "#E69F00",
   sentence: "#009E73",
   API: "#CC79A7",
+  consensus: "#c9834e",
   human: "#e4e4e7",
 };
 
@@ -44,6 +45,9 @@ export function CrossSpaceMatrix({ cross }: { cross: CrossSpace }) {
   const W = LEFT + n * CELL + 12;
   const H = TOP + n * CELL + 12;
   const nModels = cross.spaces.filter((s) => s.family !== "human").length;
+  const nPure = cross.spaces.filter(
+    (s) => s.family !== "human" && s.family !== "consensus",
+  ).length;
 
   const lookup = useMemo(() => {
     const map = new Map<string, (typeof cross.pairs)[number]>();
@@ -121,7 +125,17 @@ export function CrossSpaceMatrix({ cross }: { cross: CrossSpace }) {
               );
             }),
           )}
-          {/* separator before the human norms */}
+          {/* separators: before the machine consensus, before the human norms */}
+          {nPure < nModels && (
+            <>
+              <line x1={LEFT + nPure * CELL - 0.75} y1={TOP - 2}
+                x2={LEFT + nPure * CELL - 0.75} y2={TOP + n * CELL}
+                stroke="#fafafa" strokeWidth="1.2" strokeDasharray="3 3" />
+              <line x1={LEFT - 2} y1={TOP + nPure * CELL - 0.75}
+                x2={LEFT + n * CELL} y2={TOP + nPure * CELL - 0.75}
+                stroke="#fafafa" strokeWidth="1.2" strokeDasharray="3 3" />
+            </>
+          )}
           <line x1={LEFT + nModels * CELL - 0.75} y1={TOP - 2}
             x2={LEFT + nModels * CELL - 0.75} y2={TOP + n * CELL} stroke="#fafafa" strokeWidth="1.2" />
           <line x1={LEFT - 2} y1={TOP + nModels * CELL - 0.75}

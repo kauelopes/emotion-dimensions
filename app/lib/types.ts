@@ -146,6 +146,11 @@ export interface ConsensusPoint {
 }
 
 export interface Stats {
+  /** The models-only GPA consensus as a first-class 4-feature "model". */
+  machineConsensus: {
+    dimensionality: DimensionalityRow;
+    gridRecovery: GridRecoveryRow;
+  };
   neutralControl: NeutralControlRow[];
   consensusAxes: ConsensusAxisRow[];
   consensusAxesModelsOnly: ConsensusAxisRow[];

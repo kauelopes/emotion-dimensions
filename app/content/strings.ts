@@ -91,7 +91,7 @@ export const strings = {
   dimensionality: {
     step: "04",
     title: "The answer is ten-ish — not two, not twenty-seven",
-    text: "Across all twelve models, three independent estimators agree: the emotion subspace has an intrinsic dimensionality of roughly 10–15. That is far below the hundreds of nominal dimensions the models could use — the emotion lexicon occupies a thin slice of embedding space. But it is also clearly above the 2–4 dimensions of classical psychometric theories. The geometry that language learns is richer than core affect, leaner than a category per emotion.",
+    text: "Across all twelve models, three independent estimators agree: the emotion subspace has an intrinsic dimensionality of roughly 10–15. That is far below the hundreds of nominal dimensions the models could use — the emotion lexicon occupies a thin slice of embedding space. But it is also clearly above the 2–4 dimensions of classical psychometric theories. The geometry that language learns is richer than core affect, leaner than a category per emotion. The last row is the machine consensus — the part all twelve models agree on, introduced later in the story: distilled to 4 dimensions by construction, it effectively uses about 3 of them, right back at psychometric scale.",
     legend: {
       band24: "psychometric theories (2–4D)",
       band1015: "what embeddings show (~10–15D)",
@@ -106,7 +106,7 @@ export const strings = {
     stages: [
       "This is the emotion cloud again (BERT with a template sentence this time) — each word colored by its human-rated valence, floating in its first three principal components.",
       "Now we hand the embedding to a simple linear probe and ask it to place every word on a single line: how pleasant is this feeling? The probe is scored out-of-sample — it never sees the ratings of the words it places.",
-      "Look at the colors: they arrive sorted. The probe's line-up agrees with human valence ratings almost perfectly (R² = 0.83 in this model, up to 0.87 across the twelve). Pleasantness is written into the geometry.",
+      "Look at the colors: they arrive sorted. The probe's line-up agrees with human valence ratings almost perfectly (R² = 0.85 in this model, up to 0.88 across the twelve). Pleasantness is written into the geometry.",
     ],
     axisNeg: "unpleasant",
     axisPos: "pleasant",
@@ -116,8 +116,8 @@ export const strings = {
     title: "Arousal: a tale of two instruments",
     stages: [
       "Same cloud, same model. Now the second classical axis: arousal, from calm to activated. Psychology has more than one way of measuring it — and that turns out to matter.",
-      "First instrument: NRC-VAD, crowdsourced ratings of words in isolation. The probe manages only a middling line-up — R² = 0.40 on these 77 terms, far below what it just did for valence. Readouts like this once looked like \"embeddings don't know arousal\".",
-      "Now watch: same words, same model, same probe — we only switch the instrument to the GRID's arousal, derived from how 34 cultures describe emotional episodes. The line tightens sharply (R² = 0.69). The colors follow the new ruler.",
+      "First instrument: NRC-VAD, crowdsourced ratings of words in isolation. The probe manages only a middling line-up — R² = 0.39 on these 77 terms, far below what it just did for valence. Readouts like this once looked like \"embeddings don't know arousal\".",
+      "Now watch: same words, same model, same probe — we only switch the instrument to the GRID's arousal, derived from how 34 cultures describe emotional episodes. The line tightens sharply (R² = 0.70). The colors follow the new ruler.",
       "So how much arousal the geometry carries depends on which human measurement you ask the model to match. The GRID's semantically grounded arousal is clearly legible in language; crowdsourced subjective ratings much less so — and a third instrument (Warriner) is barely legible at all, even though its ratings are reliable enough to be. The instrument, not noise, is the difference.",
     ],
     axisNeg: "calm",
@@ -146,7 +146,7 @@ export const strings = {
   crossSpace: {
     step: "09",
     title: "The space of spaces",
-    text: "Formally now: treat each source — the twelve models plus the two human instruments, NRC-VAD and the GRID — as a map of the same 77 emotion words, and compare every pair with rotation-invariant metrics. The result is this 14×14 matrix. 82 of 91 pairs match far beyond chance; the nine that fail all involve RoBERTa without a template, a known degenerate space that works as a built-in negative control. And the crucial rows are the last two: the human norms sit inside the models' shared structure, the GRID more deeply than NRC-VAD.",
+    text: "Formally now: treat each source — the twelve models plus the two human instruments, NRC-VAD and the GRID — as a map of the same 77 emotion words, and compare every pair with rotation-invariant metrics. 82 of 91 pairs match far beyond chance; the nine that fail all involve RoBERTa without a template, a known degenerate space that works as a built-in negative control. The crucial rows are the last ones: the human norms sit inside the models' shared structure, the GRID more deeply than NRC-VAD — and between the models and the norms sits the machine consensus (dashed separator), the models' merged map, which agrees with the GRID more strongly (RSA 0.55) than any individual model does.",
     matrixHint: "lower triangle = RSA · upper = Procrustes fit · hover any cell",
     consensusTitle: "The map they agree on",
     consensusText: "Aligning all fourteen spaces at once (Generalized Procrustes) and averaging yields the consensus: a single map containing only what every source agrees on. It is not a blur — a clean valence gradient runs through it. Larger points are words the sources disagree about (hope, joy, boredom); the most stable words are the heavily lexicalized negatives (guilt, grief, despair). And measuring each space's distance to this consensus: OpenAI's embedding is the closest of all — and the GRID sits closer than half of the models (it still beats a third of them when it is held out of the consensus entirely). The geometry embeddings share is, to a good approximation, the geometry of the GRID — the machine consensus, built from the models alone, is organized axis for axis by the GRID's four dimensions (the final section shows it in full).",
@@ -155,7 +155,7 @@ export const strings = {
   ceiling: {
     step: "10",
     title: "How close to human?",
-    text: "Independent human instruments measuring the same words agree with each other at RSA ≈ 0.6 — that is the realistic reference level, not 1.0. Normalizing every model by that level (bootstrap over terms, 95% CIs): the best models reach 71–74% of human-level agreement with the GRID. None reaches it — in all twelve the gap is significantly above zero. There is human structure that embeddings still miss.",
+    text: "Independent human instruments measuring the same words agree with each other at RSA ≈ 0.6 — that is the realistic reference level, not 1.0. Normalizing every model by that level (bootstrap over terms, 95% CIs): the best individual models reach 71–74% of human-level agreement with the GRID, and in all twelve the gap is significantly above zero. But look at the top row: the machine consensus — the twelve witnesses merged — reaches 89%, and its confidence interval crosses the human line. What no single model achieves, their agreement nearly does; the remaining gap is carried by model-specific noise, not by the shared geometry.",
     calibrationText: "And the agreement is not generic semantics: recompute the same model-to-model matrix on frequency-matched neutral words and it drops to half (median RSA 0.22 vs 0.43). Emotion is an unusually consensual domain of language.",
     legend: {
       grid: "vs GRID",
@@ -179,7 +179,7 @@ export const strings = {
   arousal: {
     step: "07",
     title: "The main test: all four GRID dimensions recover",
-    text: "The instrument lesson generalizes. Against the GRID's four-dimensional structure — the study's main experiment — valence (R² up to 0.91), power (up to 0.73) and arousal (up to 0.67) recover in every model. Novelty (up to 0.63) is the critical test: power closely mirrors the dominance axis VAD already had, but novelty is the dimension the classic scheme genuinely lacks — and it recovers in every model that sees context, while the static one-vector-per-word models miss it. Evidence for the GRID's 4D account, with a twist: its fourth dimension lives in context. The strongest readouts come from BERT with a template and from OpenAI's embedding.",
+    text: "The instrument lesson generalizes. Against the GRID's four-dimensional structure — the study's main experiment — all four dimensions recover in every model: valence (R² 0.72–0.91), power (0.61–0.73), arousal (0.36–0.70) and novelty (0.41–0.70). Novelty is the critical test: power closely mirrors the dominance axis VAD already had, but novelty is the dimension the classic scheme genuinely lacks — and it, too, is legible in the geometry. The strongest readouts come from BERT with a template and from OpenAI's embedding. The last row is the machine consensus: just four numbers per word, and it recovers the four dimensions about as well as full models with hundreds of coordinates.",
     legend: {
       v: "valence",
       p: "power",
@@ -187,7 +187,7 @@ export const strings = {
       n: "novelty",
     },
     zeroNote: "0 = no better than guessing the mean",
-    note: "Against NRC-VAD's three dimensions — valence 0.61–0.87, dominance 0.36–0.65, arousal 0.15–0.50 — arousal is again the weakest and the most instrument-dependent axis: the very same words score around 0.50 against the GRID's arousal (previous scene, now across all models).",
+    note: "Against NRC-VAD's three dimensions — valence 0.66–0.88, dominance 0.42–0.67, arousal 0.19–0.50 — arousal is again the weakest and the most instrument-dependent axis: the very same words score around 0.50 against the GRID's arousal (previous scene, now across all models).",
   },
   gradients: {
     step: "07",
@@ -199,7 +199,7 @@ export const strings = {
   explore: {
     step: "08",
     title: "Explore the map yourself",
-    text: "Every model, every word, every rating. Pick a model, color by valence, arousal or dominance, and hover the points. Notice how valence paints a clean left-to-right gradient in most models — and how the same coloring by arousal is far blurrier.",
+    text: "Every model, every word, every rating. Pick a model, color by valence, arousal or dominance, and hover the points. Notice how valence paints a clean left-to-right gradient in most models — and how the same coloring by arousal is far blurrier. The last entry in the picker is the machine consensus: the same map with everything model-specific averaged away.",
     controls: { model: "model", colorBy: "color by" },
     legend: { lo: "low", hi: "high" },
   },
@@ -238,7 +238,7 @@ export const strings = {
   about: {
     step: "14",
     title: "What it means",
-    text: "Pretrained embeddings — trained only to predict words in context — converge on a shared geometry of emotion: about 10–15 dimensions, dominated by valence, organized as gradients rather than categories, and rich enough to carry all four dimensions of the GRID — including novelty, the axis classical VAD lacks, legible in every model that sees context. That shared geometry is where the psychometric maps live too: the GRID sits closer to the models' consensus than half of the models themselves, and the consensus axes match the GRID's four dimensions one to one. Yet no model reaches the level of agreement independent human instruments have with each other — distributional semantics recovers most of the affective structure psychologists measure, and the remaining gap is a finding in its own right.",
+    text: "Pretrained embeddings — trained only to predict words in context — converge on a shared geometry of emotion: about 10–15 dimensions, dominated by valence, organized as gradients rather than categories, and rich enough to carry all four dimensions of the GRID, including novelty, the axis classical VAD lacks. That shared geometry is where the psychometric maps live too, and it has a name in this study: the machine consensus, the twelve models merged into one map. Its axes match the GRID's four dimensions one to one; with just four numbers per word it recovers the GRID about as well as full embeddings; and while no individual model reaches the level of agreement independent human instruments have with each other, the machine consensus comes within statistical reach of it. Distributional semantics recovers most of the affective structure psychologists measure — and what it still misses lives in the models' idiosyncrasies, not in what they share.",
     note: "This site accompanies ongoing PhD research on the intrinsic dimensionality of the emotion lexicon in pretrained embedding spaces. Figures and statistics are computed from the research pipeline; the interactive views use the same data as the paper.",
     footer: "Kauê Moraes · PhD research · 2026",
   },
