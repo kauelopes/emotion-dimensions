@@ -203,8 +203,34 @@ export const strings = {
     controls: { model: "model", colorBy: "color by" },
     legend: { lo: "low", hi: "high" },
   },
-  about: {
+  answers: {
     step: "13",
+    title: "The three questions, answered",
+    intro:
+      "The experiment opened with three questions. Here is each one again, with its answer and the evidence behind it.",
+    q1: {
+      q: "How many dimensions does it really use?",
+      verdict: "About 10–15.",
+      text: "In every one of the twelve models the intrinsic-dimension estimators land in the same band: roughly 10–15 effective dimensions, an order of magnitude below the 300–3072 coordinates the models could use, yet clearly above the 2–4 of classical psychometrics. And the compression is not a frequency artifact: hand the very same models a set of frequency-matched neutral words and they spread over 16–32 dimensions. The emotion lexicon is packed tighter than ordinary vocabulary in all twelve — every orange dot sits left of its gray partner.",
+      legendEmotion: "emotion words",
+      legendNeutral: "neutral words, frequency-matched",
+      bandTheories: "psychometric theories (2–4D)",
+    },
+    q2: {
+      q: "Do its axes mean anything?",
+      verdict: "Yes — they are the GRID's four axes.",
+      text: "Align all fourteen spaces and average them into a consensus: its four axes match the GRID's four dimensions one to one — valence r = +0.79, power +0.82, novelty −0.73, arousal −0.64 — each axis claiming a different dimension as its best partner (the ring in each row). And this is not the GRID grading its own homework: rebuild the consensus from the twelve models alone, with no human norm in the mix, and the one-to-one match survives almost unchanged (+0.74 / +0.77 / −0.68 / −0.56 — hover any cell). Arousal is the weakest pairing, and the one whose strength depends on which instrument measures it.",
+      caption:
+        "Pearson r between each consensus axis (rows) and each GRID dimension (columns), 77 shared terms; signs are arbitrary in a GPA. Ring = best match per axis · hover a cell for the models-only value.",
+    },
+    q3: {
+      q: "Clusters or gradients?",
+      verdict: "Gradients.",
+      text: "Silhouette scores sit between 0.04 and 0.12 in every model — nowhere near the ≥ 0.5 of genuinely separated clusters. The cloud is a continuous fabric: the best two-way split merely rediscovers the valence axis (ARI up to 0.73), and no finer partition finds hard borders anywhere. With 102 words this cannot adjudicate Cowen & Keltner's 27 fine-grained categories — but it is exactly the smooth, gradient-organized geometry their semantic-space account predicts — the reason the semantic walk two scenes back never had to jump.",
+    },
+  },
+  about: {
+    step: "14",
     title: "What it means",
     text: "Pretrained embeddings — trained only to predict words in context — converge on a shared geometry of emotion: about 10–15 dimensions, dominated by valence, organized as gradients rather than categories, and rich enough to carry all four dimensions of the GRID — including novelty, the axis classical VAD lacks, legible in every model that sees context. That shared geometry is where the psychometric maps live too: the GRID sits closer to the models' consensus than half of the models themselves, and the consensus axes match the GRID's four dimensions one to one. Yet no model reaches the level of agreement independent human instruments have with each other — distributional semantics recovers most of the affective structure psychologists measure, and the remaining gap is a finding in its own right.",
     note: "This site accompanies ongoing PhD research on the intrinsic dimensionality of the emotion lexicon in pretrained embedding spaces. Figures and statistics are computed from the research pipeline; the interactive views use the same data as the paper.",

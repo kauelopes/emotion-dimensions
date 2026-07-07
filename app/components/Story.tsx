@@ -23,6 +23,7 @@ import { GpaConsensus } from "@/components/charts/GpaConsensus";
 import { CeilingChart, CalibrationStrip } from "@/components/charts/CeilingChart";
 import { ProcrustesDemo } from "@/components/charts/ProcrustesDemo";
 import { SilhouetteStrip } from "@/components/charts/SilhouetteStrip";
+import { AxisMatchGrid, DimensionPairStrip } from "@/components/charts/AnswerCharts";
 import { withBase } from "@/lib/paths";
 import type { CrossSpace, EmotionPoints, Neighbors, Stats } from "@/lib/types";
 import { strings } from "@/content/strings";
@@ -509,8 +510,92 @@ export function Story() {
           )}
         </Scene>
 
-        {/* 13 — about */}
-        <Scene id="about" step={13} title={s.about.title}>
+        {/* 13 — the three questions, answered */}
+        <Scene id="answers" step={13} title={s.answers.title}>
+          <p className="mb-10 max-w-3xl text-sm leading-relaxed text-zinc-300">
+            {s.answers.intro}
+          </p>
+          <div className="space-y-12">
+            {/* Q1 — dimensionality */}
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+              <div className="font-mono text-xs tracking-widest text-zinc-500 uppercase">
+                {s.answers.q1.q}
+              </div>
+              <h3
+                className="mt-2 text-2xl"
+                style={{ fontFamily: "var(--font-lora, serif)", color: "var(--accent)" }}
+              >
+                {s.answers.q1.verdict}
+              </h3>
+              <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_1.3fr]">
+                <p className="text-sm leading-relaxed text-zinc-300">
+                  {s.answers.q1.text}
+                </p>
+                <div>
+                  {stats ? (
+                    <DimensionPairStrip rows={stats.neutralControl} />
+                  ) : (
+                    <div className="text-xs text-zinc-600">loading…</div>
+                  )}
+                </div>
+              </div>
+            </div>
+            {/* Q2 — meaning of the axes */}
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+              <div className="font-mono text-xs tracking-widest text-zinc-500 uppercase">
+                {s.answers.q2.q}
+              </div>
+              <h3
+                className="mt-2 text-2xl"
+                style={{ fontFamily: "var(--font-lora, serif)", color: "var(--accent)" }}
+              >
+                {s.answers.q2.verdict}
+              </h3>
+              <div className="mt-4 grid gap-8 lg:grid-cols-[1.3fr_1fr]">
+                <p className="text-sm leading-relaxed text-zinc-300">
+                  {s.answers.q2.text}
+                </p>
+                <div>
+                  {stats ? (
+                    <AxisMatchGrid
+                      rows={stats.consensusAxes}
+                      modelsOnly={stats.consensusAxesModelsOnly}
+                    />
+                  ) : (
+                    <div className="text-xs text-zinc-600">loading…</div>
+                  )}
+                </div>
+              </div>
+            </div>
+            {/* Q3 — clusters vs gradients */}
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+              <div className="font-mono text-xs tracking-widest text-zinc-500 uppercase">
+                {s.answers.q3.q}
+              </div>
+              <h3
+                className="mt-2 text-2xl"
+                style={{ fontFamily: "var(--font-lora, serif)", color: "var(--accent)" }}
+              >
+                {s.answers.q3.verdict}
+              </h3>
+              <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_1.3fr]">
+                <p className="text-sm leading-relaxed text-zinc-300">
+                  {s.answers.q3.text}
+                </p>
+                <div>
+                  {stats ? (
+                    <SilhouetteStrip rows={stats.clustering} />
+                  ) : (
+                    <div className="text-xs text-zinc-600">loading…</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Scene>
+
+        {/* 14 — about */}
+        <Scene id="about" step={14} title={s.about.title}>
           <p className="max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.about.text}
           </p>

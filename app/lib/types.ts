@@ -120,7 +120,26 @@ export interface ClusteringRow {
   ari: number;
 }
 
+export interface NeutralControlRow {
+  model: string;
+  pretty: string;
+  family: string;
+  twonnEmotion: number;
+  twonnNeutral: number;
+}
+
+export type GridDim = "valence" | "power" | "arousal" | "novelty";
+
+export interface ConsensusAxisRow {
+  axis: string;
+  /** Pearson r between this GPA consensus axis and each GRID dimension. */
+  r: Record<GridDim, number>;
+}
+
 export interface Stats {
+  neutralControl: NeutralControlRow[];
+  consensusAxes: ConsensusAxisRow[];
+  consensusAxesModelsOnly: ConsensusAxisRow[];
   dimensionality: DimensionalityRow[];
   interpretation: InterpretationRow[];
   clustering: ClusteringRow[];
