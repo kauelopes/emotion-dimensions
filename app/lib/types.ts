@@ -18,11 +18,15 @@ export interface EmotionPoints {
   /** [valence, arousal, dominance] in [0,1], index-aligned with terms. */
   vad: Vec3[];
   models: Record<string, ModelPoints>;
-  /** Out-of-fold ridge-probe readings (minmax [0,1]), aligned with terms. */
+  /** Out-of-fold ridge-probe readings (minmax [0,1]), aligned with terms.
+      predA = arousal vs NRC-VAD; predAGrid = arousal vs GRID; gridA = the
+      human GRID arousal rating itself (for coloring). */
   probe: {
     model: string;
     predV: (number | null)[];
     predA: (number | null)[];
+    predAGrid: (number | null)[];
+    gridA: (number | null)[];
   };
 }
 
@@ -30,6 +34,55 @@ export interface Neighbors {
   model: string;
   /** Cosine distance matrix, index-aligned with EmotionPoints.terms. */
   distance: number[][];
+}
+
+export interface GridRecoveryRow {
+  model: string;
+  pretty: string;
+  family: string;
+  r2Valence: number;
+  r2Power: number;
+  r2Arousal: number;
+  r2Novelty: number;
+  rsaSpearman: number;
+  procrustes: number;
+}
+
+export interface SpaceInfo {
+  id: string;
+  pretty: string;
+  family: string;
+}
+
+export interface CrossSpace {
+  spaces: SpaceInfo[];
+  pairs: {
+    a: string;
+    b: string;
+    rsa: number;
+    proc: number;
+    cka: number;
+    p: number;
+  }[];
+  residuals: Record<string, number>;
+  consensus: { t: string; x: number; y: number; disp: number }[];
+  ceiling: {
+    model: string;
+    pretty: string;
+    ratioGrid: number;
+    loGrid: number;
+    hiGrid: number;
+    ratioNrc: number;
+    loNrc: number;
+    hiNrc: number;
+  }[];
+  calibration: {
+    emotion: number[];
+    modelNorm: number[];
+    neutral: number[];
+    humanHuman: number;
+    chance: number;
+  };
 }
 
 export interface DimensionalityRow {
@@ -71,6 +124,7 @@ export interface Stats {
   dimensionality: DimensionalityRow[];
   interpretation: InterpretationRow[];
   clustering: ClusteringRow[];
+  gridRecovery: GridRecoveryRow[];
 }
 
 export type VadDim = "v" | "a" | "d";

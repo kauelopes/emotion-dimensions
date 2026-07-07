@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { divergingGl } from "@/lib/colors";
 import type { EmotionPoints } from "@/lib/types";
 
@@ -82,6 +82,9 @@ function SequencePoints({
     g.computeBoundingSphere();
     return { framePos: frames, geometry: g };
   }, [data, models]);
+
+  // free GPU buffers when the geometry is replaced or the scene unmounts
+  useEffect(() => () => geometry.dispose(), [geometry]);
 
   useFrame(() => {
     const g = geomRef.current;

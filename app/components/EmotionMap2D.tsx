@@ -89,6 +89,7 @@ export function EmotionMap2D({ data }: { data: EmotionPoints }) {
           {pts.map((p) => (
             <motion.text
               key={`t-${p.i}`}
+              initial={{ x: p.px + 8, y: p.py + 3 }}
               animate={{ x: p.px + 8, y: p.py + 3 }}
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               fontSize="9"
@@ -102,6 +103,7 @@ export function EmotionMap2D({ data }: { data: EmotionPoints }) {
           {pts.map((p) => (
             <motion.circle
               key={`c-${p.i}`}
+              initial={{ cx: p.px, cy: p.py }}
               animate={{ cx: p.px, cy: p.py }}
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               r={hover === p.i ? 8 : 6}

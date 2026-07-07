@@ -3,13 +3,19 @@
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Line, Text } from "@react-three/drei";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { divergingGl } from "@/lib/colors";
-import type { EmotionPoints, VadDim } from "@/lib/types";
-import { VAD_INDEX } from "@/lib/types";
+import type { EmotionPoints } from "@/lib/types";
 
 const SCALE = 1.5;
 const RULER = 3.4;
+
+/** One collapse stage: where the probe places each word on the ruler, and
+    which human rating colors it (both in [0,1], index-aligned with terms). */
+export interface MorphStage {
+  target: (number | null)[];
+  color: (number | null)[];
+}
 
 function smoothstep(t: number) {
   const c = Math.max(0, Math.min(1, t));
@@ -27,28 +33,27 @@ function hash01(i: number) {
 
 export default function ValenceMorph3D(props: {
   data: EmotionPoints;
-  model?: string;
+  model: string;
   progress: number; // 0..1 (scroll-driven)
+  stages: MorphStage[]; // 1 stage: cloud->ruler; 2: cloud->ruler1->ruler2
   height?: number;
-  /** human rating that colors the points */
-  dim?: VadDim;
-  /** collapse target per term in [0,1] (probe reading), aligned with terms;
-      falls back to the human rating when omitted */
-  target?: (number | null)[];
   axisNeg?: string;
   axisPos?: string;
 }) {
   const {
     data,
-    model = "bge-m3",
+    model,
     progress,
+    stages,
     height = 480,
-    dim = "v",
-    target,
     axisNeg = "negative",
     axisPos = "positive",
   } = props;
-  const t = smoothstep(progress);
+
+  // with 2 stages the first collapse finishes at p=0.5
+  const p = Math.max(0, Math.min(1, progress));
+  const t1 = stages.length > 1 ? smoothstep(p / 0.5) : smoothstep(p);
+  const t2 = stages.length > 1 ? smoothstep((p - 0.5) / 0.5) : 0;
 
   return (
     <div className="w-full overflow-hidden rounded-2xl" style={{ height }}>
@@ -61,8 +66,8 @@ export default function ValenceMorph3D(props: {
       >
         <color attach="background" args={["#111113"]} />
         <ambientLight intensity={1.2} />
-        <MorphPoints data={data} model={model} t={t} dim={dim} target={target} />
-        <RulerAxis t={t} axisNeg={axisNeg} axisPos={axisPos} />
+        <MorphPoints data={data} model={model} stages={stages} t1={t1} t2={t2} />
+        <RulerAxis t={t1} axisNeg={axisNeg} axisPos={axisPos} />
         <OrbitControls makeDefault enableDamping dampingFactor={0.08} enableZoom={false} />
       </Canvas>
     </div>
@@ -112,64 +117,87 @@ function RulerAxis({
 function MorphPoints({
   data,
   model,
-  t,
-  dim,
-  target,
+  stages,
+  t1,
+  t2,
 }: {
   data: EmotionPoints;
   model: string;
-  t: number;
-  dim: VadDim;
-  target?: (number | null)[];
+  stages: MorphStage[];
+  t1: number;
+  t2: number;
 }) {
   const geomRef = useRef<THREE.BufferGeometry>(null);
 
-  const { basePos, rulerPos, colors, geometry } = useMemo(() => {
+  const { basePos, stagePos, stageCol, geometry } = useMemo(() => {
     const m = data.models[model];
-    const di = VAD_INDEX[dim];
-    const rows: { xyz: [number, number, number]; v: number; tx: number }[] = [];
-    m.xyz.forEach((row, i) => {
-      if (!row) return;
-      const tx = target ? target[i] : data.vad[i][di];
-      if (tx == null) return;
-      rows.push({ xyz: row, v: data.vad[i][di], tx });
-    });
-    const n = rows.length;
+    // keep only terms with coordinates and complete stage data
+    const idx = data.terms
+      .map((_, i) => i)
+      .filter(
+        (i) =>
+          m.xyz[i] !== null &&
+          stages.every((s) => s.target[i] != null && s.color[i] != null),
+      );
+    const n = idx.length;
     const pos0 = new Float32Array(n * 3);
-    const pos1 = new Float32Array(n * 3);
-    const col = new Float32Array(n * 3);
-    rows.forEach((r, i) => {
-      pos0[i * 3] = r.xyz[0] * SCALE;
-      pos0[i * 3 + 1] = r.xyz[1] * SCALE;
-      pos0[i * 3 + 2] = r.xyz[2] * SCALE;
-      // ruler position: where the linear probe reads this word
-      pos1[i * 3] = (r.tx - 0.5) * RULER;
-      pos1[i * 3 + 1] = (hash01(i) - 0.5) * 0.16;
-      pos1[i * 3 + 2] = (hash01(i * 7 + 3) - 0.5) * 0.1;
-      const [cr, cg, cb] = divergingGl(r.v);
-      col[i * 3] = cr;
-      col[i * 3 + 1] = cg;
-      col[i * 3 + 2] = cb;
+    idx.forEach((ti, k) => {
+      const row = m.xyz[ti]!;
+      pos0[k * 3] = row[0] * SCALE;
+      pos0[k * 3 + 1] = row[1] * SCALE;
+      pos0[k * 3 + 2] = row[2] * SCALE;
+    });
+    const sPos = stages.map((s) => {
+      const pos = new Float32Array(n * 3);
+      idx.forEach((ti, k) => {
+        pos[k * 3] = (s.target[ti]! - 0.5) * RULER;
+        pos[k * 3 + 1] = (hash01(k) - 0.5) * 0.16;
+        pos[k * 3 + 2] = (hash01(k * 7 + 3) - 0.5) * 0.1;
+      });
+      return pos;
+    });
+    const sCol = stages.map((s) => {
+      const col = new Float32Array(n * 3);
+      idx.forEach((ti, k) => {
+        const [r, g, b] = divergingGl(s.color[ti]!);
+        col[k * 3] = r;
+        col[k * 3 + 1] = g;
+        col[k * 3 + 2] = b;
+      });
+      return col;
     });
     const g = new THREE.BufferGeometry();
-    const cur = new Float32Array(pos0);
-    g.setAttribute("position", new THREE.BufferAttribute(cur, 3));
-    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(pos0), 3));
+    g.setAttribute("color", new THREE.BufferAttribute(new Float32Array(sCol[0]), 3));
     g.computeBoundingSphere();
-    return { basePos: pos0, rulerPos: pos1, colors: col, geometry: g };
-  }, [data, model, dim, target]);
+    return { basePos: pos0, stagePos: sPos, stageCol: sCol, geometry: g };
+  }, [data, model, stages]);
 
-  void colors;
+  // free GPU buffers when the geometry is replaced or the scene unmounts
+  useEffect(() => () => geometry.dispose(), [geometry]);
 
   useFrame(() => {
     const g = geomRef.current;
     if (!g) return;
-    const attr = g.getAttribute("position") as THREE.BufferAttribute;
-    const cur = attr.array as Float32Array;
+    const posAttr = g.getAttribute("position") as THREE.BufferAttribute;
+    const cur = posAttr.array as Float32Array;
+    const two = stagePos.length > 1;
     for (let i = 0; i < cur.length; i++) {
-      cur[i] = (1 - t) * basePos[i] + t * rulerPos[i];
+      // cloud -> first ruler, then (optionally) first -> second ruler
+      const onRuler = two
+        ? (1 - t2) * stagePos[0][i] + t2 * stagePos[1][i]
+        : stagePos[0][i];
+      cur[i] = (1 - t1) * basePos[i] + t1 * onRuler;
     }
-    attr.needsUpdate = true;
+    posAttr.needsUpdate = true;
+    if (two) {
+      const colAttr = g.getAttribute("color") as THREE.BufferAttribute;
+      const col = colAttr.array as Float32Array;
+      for (let i = 0; i < col.length; i++) {
+        col[i] = (1 - t2) * stageCol[0][i] + t2 * stageCol[1][i];
+      }
+      colAttr.needsUpdate = true;
+    }
     g.computeBoundingSphere();
   });
 

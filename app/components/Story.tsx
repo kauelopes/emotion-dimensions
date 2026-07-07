@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion";
+import {
+  motion,
+  useInView,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+} from "framer-motion";
 import { Scene } from "@/components/Scene";
 import { ScrollProgressScene } from "@/components/ScrollProgressScene";
 import { TheoryCards } from "@/components/TheoryCards";
@@ -11,10 +17,14 @@ import { EmotionMap2D } from "@/components/EmotionMap2D";
 import { PipelineStepper } from "@/components/PipelineStepper";
 import { SemanticWalk } from "@/components/SemanticWalk";
 import { DimensionalityChart } from "@/components/charts/DimensionalityChart";
-import { R2BarChart } from "@/components/charts/R2BarChart";
+import { GridRecoveryChart } from "@/components/charts/GridRecoveryChart";
+import { CrossSpaceMatrix } from "@/components/charts/CrossSpaceMatrix";
+import { GpaConsensus } from "@/components/charts/GpaConsensus";
+import { CeilingChart, CalibrationStrip } from "@/components/charts/CeilingChart";
+import { ProcrustesDemo } from "@/components/charts/ProcrustesDemo";
 import { SilhouetteStrip } from "@/components/charts/SilhouetteStrip";
 import { withBase } from "@/lib/paths";
-import type { EmotionPoints, Neighbors, Stats } from "@/lib/types";
+import type { CrossSpace, EmotionPoints, Neighbors, Stats } from "@/lib/types";
 import { strings } from "@/content/strings";
 
 const EmotionCloud3D = dynamic(() => import("@/components/EmotionCloud3D"), {
@@ -48,6 +58,44 @@ function Placeholder3D({ height }: { height: number }) {
   );
 }
 
+/** Keeps at most the nearby WebGL canvases alive. Browsers cap the number of
+    concurrent WebGL contexts (and evict the oldest — the hero — silently),
+    so each 3D scene mounts only when close to the viewport and remounts
+    itself if its context is ever lost. */
+function Lazy3D({
+  height,
+  children,
+}: {
+  height: number;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(ref, { margin: "600px 0px 600px 0px" });
+  const [gen, setGen] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onLost = (e: Event) => {
+      e.preventDefault();
+      setTimeout(() => setGen((g) => g + 1), 400); // force a clean remount
+    };
+    // capture phase: webglcontextlost does not bubble
+    el.addEventListener("webglcontextlost", onLost, true);
+    return () => el.removeEventListener("webglcontextlost", onLost, true);
+  }, []);
+
+  return (
+    <div ref={ref}>
+      {inView ? (
+        <div key={gen}>{children}</div>
+      ) : (
+        <Placeholder3D height={height} />
+      )}
+    </div>
+  );
+}
+
 export function Story() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
@@ -60,6 +108,7 @@ export function Story() {
   const [points, setPoints] = useState<EmotionPoints | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [neighbors, setNeighbors] = useState<Neighbors | null>(null);
+  const [cross, setCross] = useState<CrossSpace | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,16 +116,38 @@ export function Story() {
       fetch(withBase("/data/emotion_points.json")).then((r) => r.json()),
       fetch(withBase("/data/stats.json")).then((r) => r.json()),
       fetch(withBase("/data/neighbors.json")).then((r) => r.json()),
+      fetch(withBase("/data/cross_space.json")).then((r) => r.json()),
     ])
-      .then(([p, s, n]) => {
+      .then(([p, s, n, c]) => {
         setPoints(p);
         setStats(s);
         setNeighbors(n);
+        setCross(c);
       })
       .catch((e) => setError(String(e)));
   }, []);
 
   const s = strings;
+
+  // stable identities: these feed useMemo'd BufferGeometries inside the
+  // morph scenes, which re-render on every scroll tick
+  const valenceStages = useMemo(
+    () =>
+      points
+        ? [{ target: points.probe.predV, color: points.vad.map((r) => r[0]) }]
+        : null,
+    [points],
+  );
+  const arousalStages = useMemo(
+    () =>
+      points
+        ? [
+            { target: points.probe.predA, color: points.vad.map((r) => r[1]) },
+            { target: points.probe.predAGrid, color: points.probe.gridA },
+          ]
+        : null,
+    [points],
+  );
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50">
@@ -115,11 +186,13 @@ export function Story() {
             {s.hero.subtitle}
           </p>
           <div className="mt-10 w-full max-w-3xl overflow-hidden rounded-2xl border border-zinc-800">
-            {points ? (
-              <EmotionCloud3D data={points} height={420} />
-            ) : (
-              <Placeholder3D height={420} />
-            )}
+            <Lazy3D height={420}>
+              {points ? (
+                <EmotionCloud3D data={points} height={420} />
+              ) : (
+                <Placeholder3D height={420} />
+              )}
+            </Lazy3D>
           </div>
           <p className="mt-3 max-w-2xl text-xs leading-relaxed text-zinc-600">
             {s.hero.cloudCaption}
@@ -212,20 +285,21 @@ export function Story() {
               progress < 0.33 ? 0 : progress < 0.8 ? 1 : 2;
             return (
               <div className="mt-2">
-                {points ? (
-                  <ValenceMorph3D
-                    data={points}
-                    model={points.probe.model}
-                    dim="v"
-                    target={points.probe.predV}
-                    axisNeg={s.morph.axisNeg}
-                    axisPos={s.morph.axisPos}
-                    progress={progress}
-                    height={480}
-                  />
-                ) : (
-                  <Placeholder3D height={480} />
-                )}
+                <Lazy3D height={480}>
+                  {points && valenceStages ? (
+                    <ValenceMorph3D
+                      data={points}
+                      model={points.probe.model}
+                      stages={valenceStages}
+                      axisNeg={s.morph.axisNeg}
+                      axisPos={s.morph.axisPos}
+                      progress={progress}
+                      height={480}
+                    />
+                  ) : (
+                    <Placeholder3D height={480} />
+                  )}
+                </Lazy3D>
                 <p className="mt-4 min-h-[3.5rem] max-w-3xl text-sm leading-relaxed text-zinc-300">
                   {s.morph.stages[stage]}
                 </p>
@@ -234,29 +308,30 @@ export function Story() {
           }}
         </ScrollProgressScene>
 
-        {/* 06 — arousal morph: same probe, shuffled colors */}
+        {/* 06 — arousal: NRC collapse, then re-collapse onto the GRID ruler */}
         <ScrollProgressScene step={6} title={s.morphArousal.title}>
           {(p) => {
-            const progress = reducedMotion ? 1 : Math.min(1, p / 0.72);
+            const progress = reducedMotion ? 1 : Math.min(1, p / 0.85);
             const stage =
-              progress < 0.33 ? 0 : progress < 0.8 ? 1 : 2;
+              progress < 0.2 ? 0 : progress < 0.5 ? 1 : progress < 0.85 ? 2 : 3;
             return (
               <div className="mt-2">
-                {points ? (
-                  <ValenceMorph3D
-                    data={points}
-                    model={points.probe.model}
-                    dim="a"
-                    target={points.probe.predA}
-                    axisNeg={s.morphArousal.axisNeg}
-                    axisPos={s.morphArousal.axisPos}
-                    progress={progress}
-                    height={480}
-                  />
-                ) : (
-                  <Placeholder3D height={480} />
-                )}
-                <p className="mt-4 min-h-[3.5rem] max-w-3xl text-sm leading-relaxed text-zinc-300">
+                <Lazy3D height={480}>
+                  {points && arousalStages ? (
+                    <ValenceMorph3D
+                      data={points}
+                      model={points.probe.model}
+                      stages={arousalStages}
+                      axisNeg={s.morphArousal.axisNeg}
+                      axisPos={s.morphArousal.axisPos}
+                      progress={progress}
+                      height={480}
+                    />
+                  ) : (
+                    <Placeholder3D height={480} />
+                  )}
+                </Lazy3D>
+                <p className="mt-4 min-h-[4.5rem] max-w-3xl text-sm leading-relaxed text-zinc-300">
                   {s.morphArousal.stages[stage]}
                 </p>
               </div>
@@ -264,14 +339,14 @@ export function Story() {
           }}
         </ScrollProgressScene>
 
-        {/* 07 — the numbers behind it */}
-        <Scene id="arousal" step={7} title={s.arousal.title}>
+        {/* 07 — main experiment: GRID 4D recovery */}
+        <Scene id="grid-recovery" step={7} title={s.arousal.title}>
           <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.arousal.text}
           </p>
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
             {stats ? (
-              <R2BarChart rows={stats.interpretation} />
+              <GridRecoveryChart rows={stats.gridRecovery} />
             ) : (
               <div className="text-xs text-zinc-600">loading…</div>
             )}
@@ -291,16 +366,18 @@ export function Story() {
             );
             return (
               <div className="mt-2">
-                {points ? (
-                  <ModelMorph3D
-                    data={points}
-                    models={STABILITY_MODELS}
-                    progress={progress}
-                    height={480}
-                  />
-                ) : (
-                  <Placeholder3D height={480} />
-                )}
+                <Lazy3D height={480}>
+                  {points ? (
+                    <ModelMorph3D
+                      data={points}
+                      models={STABILITY_MODELS}
+                      progress={progress}
+                      height={480}
+                    />
+                  ) : (
+                    <Placeholder3D height={480} />
+                  )}
+                </Lazy3D>
                 <div className="mt-3 flex items-center justify-between gap-4">
                   <p className="min-h-[3.5rem] max-w-3xl text-sm leading-relaxed text-zinc-300">
                     {s.stability.stages[stage]}
@@ -315,8 +392,84 @@ export function Story() {
           }}
         </ScrollProgressScene>
 
-        {/* 09 — gradients not clusters + semantic walk */}
-        <Scene id="gradients" step={9} title={s.gradients.title}>
+        {/* 09 — E7: the space of spaces (procrustes demo + matrix + GPA consensus) */}
+        <Scene id="cross-space" step={9} title={s.crossSpace.title}>
+          <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr]">
+            <div>
+              <h3
+                className="mb-2 text-lg"
+                style={{ fontFamily: "var(--font-lora, serif)", color: "var(--accent)" }}
+              >
+                {s.procrustes.title}
+              </h3>
+              <p className="text-sm leading-relaxed text-zinc-300">
+                {s.procrustes.text}
+              </p>
+            </div>
+            <div>
+              {points ? (
+                <ProcrustesDemo points={points} />
+              ) : (
+                <div className="text-xs text-zinc-600">loading…</div>
+              )}
+            </div>
+          </div>
+          <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.2fr]">
+            <p className="text-sm leading-relaxed text-zinc-300">
+              {s.crossSpace.text}
+            </p>
+            <div>
+              {cross ? (
+                <CrossSpaceMatrix cross={cross} />
+              ) : (
+                <div className="text-xs text-zinc-600">loading…</div>
+              )}
+            </div>
+          </div>
+          <div className="mt-10">
+            <h3
+              className="text-lg"
+              style={{ fontFamily: "var(--font-lora, serif)", color: "var(--accent)" }}
+            >
+              {s.crossSpace.consensusTitle}
+            </h3>
+            <p className="mt-2 mb-4 max-w-3xl text-sm leading-relaxed text-zinc-300">
+              {s.crossSpace.consensusText}
+            </p>
+            {cross && points ? (
+              <GpaConsensus cross={cross} points={points} />
+            ) : (
+              <div className="text-xs text-zinc-600">loading…</div>
+            )}
+          </div>
+        </Scene>
+
+        {/* 10 — E7: distance to the human ceiling */}
+        <Scene id="ceiling" step={10} title={s.ceiling.title}>
+          <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
+            {s.ceiling.text}
+          </p>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+            {cross ? (
+              <CeilingChart cross={cross} />
+            ) : (
+              <div className="text-xs text-zinc-600">loading…</div>
+            )}
+          </div>
+          <p className="mt-6 mb-4 max-w-3xl text-sm leading-relaxed text-zinc-300">
+            {s.ceiling.calibrationText}
+          </p>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+            {cross ? (
+              <CalibrationStrip cross={cross} />
+            ) : (
+              <div className="text-xs text-zinc-600">loading…</div>
+            )}
+          </div>
+        </Scene>
+
+        {/* 11 — gradients not clusters + semantic walk */}
+        <Scene id="gradients" step={11} title={s.gradients.title}>
           <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
             <p className="text-sm leading-relaxed text-zinc-300">
               {s.gradients.text}
@@ -344,8 +497,8 @@ export function Story() {
           </div>
         </Scene>
 
-        {/* 10 — explore */}
-        <Scene id="explore" step={10} title={s.explore.title}>
+        {/* 12 — explore */}
+        <Scene id="explore" step={12} title={s.explore.title}>
           <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.explore.text}
           </p>
@@ -356,8 +509,8 @@ export function Story() {
           )}
         </Scene>
 
-        {/* 11 — about */}
-        <Scene id="about" step={11} title={s.about.title}>
+        {/* 13 — about */}
+        <Scene id="about" step={13} title={s.about.title}>
           <p className="max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.about.text}
           </p>
