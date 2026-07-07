@@ -150,6 +150,7 @@ export interface Stats {
   machineConsensus: {
     dimensionality: DimensionalityRow;
     gridRecovery: GridRecoveryRow;
+    clustering: ClusteringRow;
   };
   neutralControl: NeutralControlRow[];
   consensusAxes: ConsensusAxisRow[];

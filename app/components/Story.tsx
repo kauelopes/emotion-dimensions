@@ -13,7 +13,6 @@ import { Scene } from "@/components/Scene";
 import { ScrollProgressScene } from "@/components/ScrollProgressScene";
 import { TheoryCards } from "@/components/TheoryCards";
 import { VocabularyWall } from "@/components/VocabularyWall";
-import { EmotionMap2D } from "@/components/EmotionMap2D";
 import { PipelineStepper } from "@/components/PipelineStepper";
 import { SemanticWalk } from "@/components/SemanticWalk";
 import { DimensionalityChart } from "@/components/charts/DimensionalityChart";
@@ -43,6 +42,10 @@ const ValenceMorph3D = dynamic(() => import("@/components/ValenceMorph3D"), {
 const ModelMorph3D = dynamic(() => import("@/components/ModelMorph3D"), {
   ssr: false,
   loading: () => <Placeholder3D height={480} />,
+});
+const EmotionMap3D = dynamic(() => import("@/components/EmotionMap3D"), {
+  ssr: false,
+  loading: () => <Placeholder3D height={560} />,
 });
 
 const STABILITY_MODELS = [
@@ -487,7 +490,9 @@ export function Story() {
             </p>
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
               {stats ? (
-                <SilhouetteStrip rows={stats.clustering} />
+                <SilhouetteStrip
+                  rows={[...stats.clustering, stats.machineConsensus.clustering]}
+                />
               ) : (
                 <div className="text-xs text-zinc-600">loading…</div>
               )}
@@ -513,11 +518,13 @@ export function Story() {
           <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.explore.text}
           </p>
-          {points ? (
-            <EmotionMap2D data={points} />
-          ) : (
-            <div className="text-xs text-zinc-600">loading…</div>
-          )}
+          <Lazy3D height={640}>
+            {points ? (
+              <EmotionMap3D data={points} />
+            ) : (
+              <Placeholder3D height={640} />
+            )}
+          </Lazy3D>
         </Scene>
 
         {/* 13 — the three questions, answered */}
@@ -605,7 +612,10 @@ export function Story() {
                 </p>
                 <div>
                   {stats ? (
-                    <SilhouetteStrip rows={stats.clustering} />
+                    <SilhouetteStrip
+                      rows={[...stats.clustering,
+                             stats.machineConsensus.clustering]}
+                    />
                   ) : (
                     <div className="text-xs text-zinc-600">loading…</div>
                   )}

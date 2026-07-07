@@ -192,16 +192,17 @@ export const strings = {
   gradients: {
     step: "07",
     title: "Gradients, not islands",
-    text: "If emotions were discrete categories, the cloud would break into tight clusters. It doesn't. Silhouette scores hover around 0.1 in every model — barely more structure than a continuous smear. Words shade into one another: anger into irritation into annoyance. Of the three theories, this is the signature of Cowen & Keltner's semantic space: a smooth, low-dimensional fabric organized by gradients, with valence as its strongest thread.",
+    text: "If emotions were discrete categories, the cloud would break into tight clusters. It doesn't. Silhouette scores hover around 0.1 in every model — barely more structure than a continuous smear. And this is not just noise blurring the borders: the machine consensus, where model-specific noise is averaged away, scores 0.15 — a touch crisper, still nowhere near separated islands (≥ 0.5). Words shade into one another: anger into irritation into annoyance. Of the three theories, this is the signature of Cowen & Keltner's semantic space: a smooth, low-dimensional fabric organized by gradients, with valence as its strongest thread.",
     refLine: "well-separated clusters (≥ 0.5)",
     axisLabel: "silhouette score at best k",
   },
   explore: {
     step: "08",
     title: "Explore the map yourself",
-    text: "Every model, every word, every rating. Pick a model, color by valence, arousal or dominance, and hover the points. Notice how valence paints a clean left-to-right gradient in most models — and how the same coloring by arousal is far blurrier. The last entry in the picker is the machine consensus: the same map with everything model-specific averaged away.",
+    text: "Every model, every word, every rating — now in the full three principal components. Pick a model, color by valence, arousal or dominance, drag to rotate, and hover the points. Notice how valence paints a clean gradient across the cloud in most models — and how the same coloring by arousal is far blurrier. The last entry in the picker is the machine consensus: the same map with everything model-specific averaged away.",
     controls: { model: "model", colorBy: "color by" },
     legend: { lo: "low", hi: "high" },
+    dragHint: "drag to rotate",
   },
   answers: {
     step: "13",
@@ -232,7 +233,7 @@ export const strings = {
     q3: {
       q: "Clusters or gradients?",
       verdict: "Gradients.",
-      text: "Silhouette scores sit between 0.04 and 0.12 in every model — nowhere near the ≥ 0.5 of genuinely separated clusters. The cloud is a continuous fabric: the best two-way split merely rediscovers the valence axis (ARI up to 0.73), and no finer partition finds hard borders anywhere. With 102 words this cannot adjudicate Cowen & Keltner's 27 fine-grained categories — but it is exactly the smooth, gradient-organized geometry their semantic-space account predicts — the reason the semantic walk two scenes back never had to jump.",
+      text: "Silhouette scores sit between 0.04 and 0.12 in every model — nowhere near the ≥ 0.5 of genuinely separated clusters — and the machine consensus, with model noise averaged away, still only reaches 0.15: the smear is not an artifact of noisy individual models. The cloud is a continuous fabric: the best two-way split merely rediscovers the valence axis (ARI up to 0.73), and no finer partition finds hard borders anywhere. With 102 words this cannot adjudicate Cowen & Keltner's 27 fine-grained categories — but it is exactly the smooth, gradient-organized geometry their semantic-space account predicts — the reason the semantic walk two scenes back never had to jump.",
     },
   },
   about: {

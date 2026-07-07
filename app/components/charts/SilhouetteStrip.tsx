@@ -31,13 +31,28 @@ export function SilhouetteStrip({ rows }: { rows: ClusteringRow[] }) {
         <text x={sx(0.5)} y={CY - 40} textAnchor="middle" fontSize="9" fill="#d4d4d8">
           {strings.gradients.refLine}
         </text>
-        {rows.map((r, i) => (
-          <circle key={r.model} cx={sx(r.silhouetteBest)}
-            cy={CY + (i % 2 === 0 ? -10 : -20)} r="5"
-            fill="var(--accent)" opacity="0.75" stroke="#09090b" strokeWidth="1">
-            <title>{`${r.pretty} — silhouette ${r.silhouetteBest} (best k = ${r.bestK})`}</title>
-          </circle>
-        ))}
+        {rows.map((r, i) =>
+          r.family === "consensus" ? (
+            <g key={r.model}>
+              <rect x={sx(r.silhouetteBest) - 4.6} y={CY - 15 - 4.6}
+                width="9.2" height="9.2"
+                transform={`rotate(45 ${sx(r.silhouetteBest)} ${CY - 15})`}
+                fill="none" stroke="var(--accent)" strokeWidth="2">
+                <title>{`${r.pretty} — silhouette ${r.silhouetteBest} (best k = ${r.bestK})`}</title>
+              </rect>
+              <text x={sx(r.silhouetteBest)} y={CY - 27} textAnchor="middle"
+                fontSize="8.5" fill="var(--accent)" fontWeight="600">
+                {r.pretty}
+              </text>
+            </g>
+          ) : (
+            <circle key={r.model} cx={sx(r.silhouetteBest)}
+              cy={CY + (i % 2 === 0 ? -10 : -20)} r="5"
+              fill="var(--accent)" opacity="0.75" stroke="#09090b" strokeWidth="1">
+              <title>{`${r.pretty} — silhouette ${r.silhouetteBest} (best k = ${r.bestK})`}</title>
+            </circle>
+          ),
+        )}
         <text x={sx(0)} y={H - 8} fontSize="9" fill="#71717a">
           {strings.gradients.axisLabel} · one dot per model (hover)
         </text>
