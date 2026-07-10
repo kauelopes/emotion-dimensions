@@ -140,7 +140,7 @@ export function EmotionMap2D({ data }: { data: EmotionPoints }) {
         />
         <span>{strings.explore.legend.hi}</span>
         <span className="ml-auto font-mono">
-          PC1 × PC2 · {data.models[model].pretty}
+          distance-map axes 1 × 2 · {data.models[model].pretty}
         </span>
       </div>
     </div>

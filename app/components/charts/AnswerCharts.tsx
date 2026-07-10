@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { divergingCss } from "@/lib/colors";
 import type {
-  ConsensusAxisRow,
   ConsensusPoint,
   EmotionPoints,
   GridDim,
@@ -84,81 +83,13 @@ export function DimensionPairStrip({ rows }: { rows: NeutralControlRow[] }) {
 }
 
 /* ------------------------------------------------------------------ Q2 —
-   4×4 axis-match grid: Pearson r between each GPA consensus axis and each
+   (the former 4x4 axis-match grid was removed with the relational rewrite;
    GRID dimension. The ring marks the best match per axis. */
 
 const DIMS: GridDim[] = ["valence", "power", "arousal", "novelty"];
 const CELL = 92;
 const GRID_LEFT = 56;
 const GRID_TOP = 30;
-
-export function AxisMatchGrid({
-  rows,
-  modelsOnly,
-}: {
-  rows: ConsensusAxisRow[];
-  modelsOnly: ConsensusAxisRow[];
-}) {
-  const w = GRID_LEFT + DIMS.length * CELL + 8;
-  const h = GRID_TOP + rows.length * CELL + 8;
-  const mo = new Map(modelsOnly.map((r) => [r.axis, r.r]));
-
-  return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${w} ${h}`} className="mx-auto h-auto w-full max-w-[460px] min-w-[380px]">
-        {DIMS.map((d, j) => (
-          <text key={d} x={GRID_LEFT + j * CELL + CELL / 2} y={GRID_TOP - 10}
-            textAnchor="middle" fontSize="10" fill="#d4d4d8">{d}</text>
-        ))}
-        {rows.map((row, i) => {
-          const best = DIMS.reduce((a, b) =>
-            Math.abs(row.r[a]) >= Math.abs(row.r[b]) ? a : b);
-          return (
-            <g key={row.axis}>
-              <text x={GRID_LEFT - 10} y={GRID_TOP + i * CELL + CELL / 2 + 3}
-                textAnchor="end" fontSize="10" fill="#d4d4d8">{row.axis}</text>
-              {DIMS.map((d, j) => {
-                const r = row.r[d];
-                const a = Math.abs(r);
-                const x = GRID_LEFT + j * CELL;
-                const y = GRID_TOP + i * CELL;
-                const rMo = mo.get(row.axis)?.[d];
-                return (
-                  <g key={d}>
-                    <rect x={x + 2} y={y + 2} width={CELL - 4} height={CELL - 4}
-                      rx="6" fill="var(--accent)"
-                      opacity={0.06 + a * 0.85}
-                      stroke={d === best ? "#e4e4e7" : "none"}
-                      strokeWidth={d === best ? 2 : 0}>
-                      <title>
-                        {`${row.axis} × ${d}: r = ${r > 0 ? "+" : ""}${r.toFixed(2)}` +
-                          (rMo !== undefined
-                            ? `\nmodels-only consensus: ${rMo > 0 ? "+" : ""}${rMo.toFixed(2)}`
-                            : "")}
-                      </title>
-                    </rect>
-                    <text x={x + CELL / 2} y={y + CELL / 2 + 4} textAnchor="middle"
-                      fontSize="12" pointerEvents="none"
-                      fill={a > 0.5 ? "#09090b" : "#e4e4e7"}>
-                      {r > 0 ? "+" : "−"}{Math.abs(r).toFixed(2).replace("0.", ".")}
-                    </text>
-                  </g>
-                );
-              })}
-            </g>
-          );
-        })}
-      </svg>
-      <p className="mt-2 text-xs leading-relaxed text-zinc-600">
-        {strings.answers.q2.caption}
-      </p>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ Q2b —
-   the merged model itself: the models-only GPA consensus (77 terms), plotted
-   on its first two axes — which are, empirically, valence and power. */
 
 const MW = 700;
 const MH = 430;

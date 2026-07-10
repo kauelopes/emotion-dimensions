@@ -323,7 +323,7 @@ function TwoReadingBars({ axes }: { axes: RdmAxes }) {
               rx={3}
               fill="#7f8fa6"
             >
-              <title>{`${DIM_LABEL[d]} — aligned-coordinate reading |φ| = ${gpa.toFixed(2)}`}</title>
+              <title>{`${DIM_LABEL[d]} — aligned-coordinate reading: ${gpa.toFixed(2)}`}</title>
             </rect>
             <rect
               x={cx + 3}
@@ -357,11 +357,11 @@ function TwoReadingBars({ axes }: { axes: RdmAxes }) {
       <g transform={`translate(${left}, 12)`}>
         <rect x={0} y={-7} width={10} height={10} rx={2} fill="#7f8fa6" />
         <text x={14} y={2} fontSize="9" fill="#a1a1aa">
-          aligned-coordinate reading (GPA frame)
+          aligned-coordinate reading
         </text>
         <rect x={210} y={-7} width={10} height={10} rx={2} fill="var(--accent)" />
         <text x={224} y={2} fontSize="9" fill="#a1a1aa">
-          raw relational reading (RDM frame)
+          raw relational reading (distance map)
         </text>
       </g>
     </svg>

@@ -41,7 +41,7 @@ export function GridRecoveryChart({ rows }: { rows: GridRecoveryRow[] }) {
         <text x={zero} y={TOP + rows.length * GROUP_H + 14} textAnchor="middle"
           fontSize="9" fill="#e4e4e7">0</text>
         <text x={W - 16} y={TOP + rows.length * GROUP_H + 30} textAnchor="end"
-          fontSize="9" fill="#71717a">R² vs GRID (ridge, 80 terms) → · {strings.arousal.zeroNote}</text>
+          fontSize="9" fill="#71717a">{strings.arousal.axisTail} · {strings.arousal.zeroNote}</text>
 
         {rows.map((r, gi) => {
           const gy = TOP + gi * GROUP_H;

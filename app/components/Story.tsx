@@ -20,10 +20,8 @@ import { GridRecoveryChart } from "@/components/charts/GridRecoveryChart";
 import { CrossSpaceMatrix } from "@/components/charts/CrossSpaceMatrix";
 import { GpaConsensus } from "@/components/charts/GpaConsensus";
 import { CeilingChart, CalibrationStrip } from "@/components/charts/CeilingChart";
-import { ProcrustesDemo } from "@/components/charts/ProcrustesDemo";
 import { SilhouetteStrip } from "@/components/charts/SilhouetteStrip";
 import {
-  AxisMatchGrid,
   DimensionPairStrip,
   ModelsConsensusMap,
 } from "@/components/charts/AnswerCharts";
@@ -36,8 +34,10 @@ import {
 } from "@/components/charts/RdmCharts";
 import { withBase } from "@/lib/paths";
 import type {
+  ClusteringRow,
   CrossSpace,
   EmotionPoints,
+  GridRecoveryRow,
   Neighbors,
   RdmAxes,
   RdmCommittees,
@@ -139,21 +139,25 @@ export function Story() {
   const [rdmAx, setRdmAx] = useState<RdmAxes | null>(null);
   const [rdmCom, setRdmCom] = useState<RdmCommittees | null>(null);
   const [rdmSpec, setRdmSpec] = useState<RdmSpectrum | null>(null);
+  const [rdmRecovery, setRdmRecovery] = useState<GridRecoveryRow[] | null>(null);
+  const [rdmClust, setRdmClust] = useState<ClusteringRow | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
-      fetch(withBase("/data/emotion_points.json")).then((r) => r.json()),
+      fetch(withBase("/data/rdmPoints.json")).then((r) => r.json()),
       fetch(withBase("/data/stats.json")).then((r) => r.json()),
-      fetch(withBase("/data/neighbors.json")).then((r) => r.json()),
-      fetch(withBase("/data/cross_space.json")).then((r) => r.json()),
+      fetch(withBase("/data/rdmNeighbors.json")).then((r) => r.json()),
+      fetch(withBase("/data/rdmMatrix.json")).then((r) => r.json()),
       fetch(withBase("/data/rdmFingerprints.json")).then((r) => r.json()),
       fetch(withBase("/data/rdmFactorial.json")).then((r) => r.json()),
       fetch(withBase("/data/rdmAxes.json")).then((r) => r.json()),
       fetch(withBase("/data/rdmCommittees.json")).then((r) => r.json()),
       fetch(withBase("/data/rdmSpectrum.json")).then((r) => r.json()),
+      fetch(withBase("/data/rdmRecovery.json")).then((r) => r.json()),
+      fetch(withBase("/data/rdmClustering.json")).then((r) => r.json()),
     ])
-      .then(([p, s, n, c, fp, fac, ax, com, spec]) => {
+      .then(([p, s, n, c, fp, fac, ax, com, spec, rec, clu]) => {
         setPoints(p);
         setStats(s);
         setNeighbors(n);
@@ -163,6 +167,8 @@ export function Story() {
         setRdmAx(ax);
         setRdmCom(com);
         setRdmSpec(spec);
+        setRdmRecovery(rec.rows);
+        setRdmClust(clu);
       })
       .catch((e) => setError(String(e)));
   }, []);
@@ -303,25 +309,38 @@ export function Story() {
           </div>
         </Scene>
 
-        {/* 04 — dimensionality */}
-        <Scene id="dimensionality" step={4} title={s.dimensionality.title}>
+        {/* 04 — one fingerprint per model */}
+        <Scene id="rdm-fingerprints" step={4} title={s.rdm.fingerprints.title}>
+          <div className="grid gap-8 lg:grid-cols-[1fr_1.4fr]">
+            <p className="text-sm leading-relaxed text-zinc-300">
+              {s.rdm.fingerprints.text}
+            </p>
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+              {rdmFp ? (
+                <RdmFingerprintWall data={rdmFp} points={points} />
+              ) : (
+                <div className="text-xs text-zinc-600">loading…</div>
+              )}
+            </div>
+          </div>
+        </Scene>
+
+        {/* 05 — dimensionality */}
+        <Scene id="dimensionality" step={5} title={s.dimensionality.title}>
           <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.dimensionality.text}
           </p>
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
             {stats ? (
-              <DimensionalityChart
-                rows={[...stats.dimensionality,
-                       stats.machineConsensus.dimensionality]}
-              />
+              <DimensionalityChart rows={stats.dimensionality} />
             ) : (
               <div className="text-xs text-zinc-600">loading…</div>
             )}
           </div>
         </Scene>
 
-        {/* 05 — valence morph (scroll-driven, probe readout) */}
-        <ScrollProgressScene step={5} title={s.morph.title}>
+        {/* 06 — valence morph (scroll-driven, neighbourhood readout) */}
+        <ScrollProgressScene step={6} title={s.morph.title}>
           {(p) => {
             const progress = reducedMotion ? 1 : Math.min(1, p / 0.72);
             const stage =
@@ -351,8 +370,8 @@ export function Story() {
           }}
         </ScrollProgressScene>
 
-        {/* 06 — arousal: NRC collapse, then re-collapse onto the GRID ruler */}
-        <ScrollProgressScene step={6} title={s.morphArousal.title}>
+        {/* 07 — arousal: NRC collapse, then re-collapse onto the GRID ruler */}
+        <ScrollProgressScene step={7} title={s.morphArousal.title}>
           {(p) => {
             const progress = reducedMotion ? 1 : Math.min(1, p / 0.85);
             const stage =
@@ -382,17 +401,14 @@ export function Story() {
           }}
         </ScrollProgressScene>
 
-        {/* 07 — main experiment: GRID 4D recovery */}
-        <Scene id="grid-recovery" step={7} title={s.arousal.title}>
+        {/* 08 — main experiment: GRID 4D recovery from neighbourhoods */}
+        <Scene id="grid-recovery" step={8} title={s.arousal.title}>
           <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.arousal.text}
           </p>
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-            {stats ? (
-              <GridRecoveryChart
-                rows={[...stats.gridRecovery,
-                       stats.machineConsensus.gridRecovery]}
-              />
+            {rdmRecovery ? (
+              <GridRecoveryChart rows={rdmRecovery} />
             ) : (
               <div className="text-xs text-zinc-600">loading…</div>
             )}
@@ -402,8 +418,8 @@ export function Story() {
           </p>
         </Scene>
 
-        {/* 08 — stability across models */}
-        <ScrollProgressScene step={8} title={s.stability.title}>
+        {/* 09 — stability across models */}
+        <ScrollProgressScene step={9} title={s.stability.title}>
           {(p) => {
             const progress = reducedMotion ? 1 : Math.min(1, p / 0.85);
             const stage = Math.min(
@@ -438,29 +454,9 @@ export function Story() {
           }}
         </ScrollProgressScene>
 
-        {/* 09 — E7: the space of spaces (procrustes demo + matrix + GPA consensus) */}
-        <Scene id="cross-space" step={9} title={s.crossSpace.title}>
+        {/* 10 — the space of spaces (RSA matrix + consensus map) */}
+        <Scene id="cross-space" step={10} title={s.crossSpace.title}>
           <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr]">
-            <div>
-              <h3
-                className="mb-2 text-lg"
-                style={{ fontFamily: "var(--font-lora, serif)", color: "var(--accent)" }}
-              >
-                {s.procrustes.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-zinc-300">
-                {s.procrustes.text}
-              </p>
-            </div>
-            <div>
-              {points ? (
-                <ProcrustesDemo points={points} />
-              ) : (
-                <div className="text-xs text-zinc-600">loading…</div>
-              )}
-            </div>
-          </div>
-          <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.2fr]">
             <p className="text-sm leading-relaxed text-zinc-300">
               {s.crossSpace.text}
             </p>
@@ -490,8 +486,8 @@ export function Story() {
           </div>
         </Scene>
 
-        {/* 10 — E7: distance to the human ceiling */}
-        <Scene id="ceiling" step={10} title={s.ceiling.title}>
+        {/* 11 — distance to the human level */}
+        <Scene id="ceiling" step={11} title={s.ceiling.title}>
           <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.ceiling.text}
           </p>
@@ -511,22 +507,6 @@ export function Story() {
             ) : (
               <div className="text-xs text-zinc-600">loading…</div>
             )}
-          </div>
-        </Scene>
-
-        {/* 11 — Series R: one fingerprint per model */}
-        <Scene id="rdm-fingerprints" step={11} title={s.rdm.fingerprints.title}>
-          <div className="grid gap-8 lg:grid-cols-[1fr_1.4fr]">
-            <p className="text-sm leading-relaxed text-zinc-300">
-              {s.rdm.fingerprints.text}
-            </p>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-              {rdmFp ? (
-                <RdmFingerprintWall data={rdmFp} points={points} />
-              ) : (
-                <div className="text-xs text-zinc-600">loading…</div>
-              )}
-            </div>
           </div>
         </Scene>
 
@@ -590,10 +570,8 @@ export function Story() {
               {s.gradients.text}
             </p>
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-              {stats ? (
-                <SilhouetteStrip
-                  rows={[...stats.clustering, stats.machineConsensus.clustering]}
-                />
+              {stats && rdmClust ? (
+                <SilhouetteStrip rows={[...stats.clustering, rdmClust]} />
               ) : (
                 <div className="text-xs text-zinc-600">loading…</div>
               )}
@@ -669,29 +647,14 @@ export function Story() {
               >
                 {s.answers.q2.verdict}
               </h3>
-              <div className="mt-4 grid gap-8 lg:grid-cols-[1.3fr_1fr]">
-                <p className="text-sm leading-relaxed text-zinc-300">
-                  {s.answers.q2.text}
-                </p>
-                <div>
-                  {stats ? (
-                    <AxisMatchGrid
-                      rows={stats.consensusAxes}
-                      modelsOnly={stats.consensusAxesModelsOnly}
-                    />
-                  ) : (
-                    <div className="text-xs text-zinc-600">loading…</div>
-                  )}
-                </div>
-              </div>
+              <p className="mt-4 max-w-3xl text-sm leading-relaxed text-zinc-300">
+                {s.answers.q2.text}
+              </p>
               <p className="mt-8 mb-4 max-w-3xl text-sm leading-relaxed text-zinc-300">
                 {s.answers.q2.mapLead}
               </p>
-              {stats && points ? (
-                <ModelsConsensusMap
-                  rows={stats.consensusModelsOnly}
-                  points={points}
-                />
+              {cross && points ? (
+                <ModelsConsensusMap rows={cross.consensus} points={points} />
               ) : (
                 <div className="text-xs text-zinc-600">loading…</div>
               )}
@@ -712,11 +675,8 @@ export function Story() {
                   {s.answers.q3.text}
                 </p>
                 <div>
-                  {stats ? (
-                    <SilhouetteStrip
-                      rows={[...stats.clustering,
-                             stats.machineConsensus.clustering]}
-                    />
+                  {stats && rdmClust ? (
+                    <SilhouetteStrip rows={[...stats.clustering, rdmClust]} />
                   ) : (
                     <div className="text-xs text-zinc-600">loading…</div>
                   )}

@@ -158,7 +158,7 @@ export default function EmotionMap3D({
         />
         <span>{strings.explore.legend.hi}</span>
         <span className="ml-auto font-mono">
-          PC1 × PC2 × PC3 · {data.models[model].pretty} · {strings.explore.dragHint}
+          distance-map axes 1 × 2 × 3 · {data.models[model].pretty} · {strings.explore.dragHint}
         </span>
       </div>
     </div>

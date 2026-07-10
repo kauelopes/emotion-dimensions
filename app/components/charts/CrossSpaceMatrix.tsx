@@ -107,7 +107,7 @@ export function CrossSpaceMatrix({ cross }: { cross: CrossSpace }) {
               const p = pair(i, j);
               if (!p) return null;
               // lower triangle = RSA, upper = Procrustes fit (like fig F7)
-              const v = i > j ? p.rsa : p.proc;
+              const v = i > j ? p.rsa : p.cka;
               const active = hover && ((hover.a === i && hover.b === j) || (hover.a === j && hover.b === i));
               return (
                 <rect
@@ -150,7 +150,7 @@ export function CrossSpaceMatrix({ cross }: { cross: CrossSpace }) {
               {cross.spaces[hover.a].pretty} × {cross.spaces[hover.b].pretty}
             </b>
             <br />
-            RSA {hovered.rsa} · Procrustes {hovered.proc} · CKA {hovered.cka}
+            RSA {hovered.rsa} · CKA {hovered.cka} · permutation p {hovered.p}
             <br />
             Mantel p {hovered.p < 0.001 ? "< 0.001" : `= ${hovered.p}`}
           </div>
