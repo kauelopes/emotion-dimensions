@@ -96,6 +96,15 @@ export interface DimensionalityRow {
   pca90: number;
   twonn: number;
   mle: number;
+  /** TwoNN with the model reduced to the 13 PCs that enter the GPA — the
+   *  matched ruler for comparing with the consensus (E12.0). Absent on the
+   *  consensus row, which is already a 13-feature object. */
+  twonnK13?: number;
+  /** MLE on the same 13-PC ruler (E12.0). */
+  mleK13?: number;
+  /** Members' medians on the 13-PC ruler (consensus row only). */
+  modelsTwonnK13Median?: number;
+  modelsMleK13Median?: number;
 }
 
 export interface InterpretationRow {
@@ -169,3 +178,93 @@ export const VAD_LABEL: Record<VadDim, string> = {
   a: "arousal",
   d: "dominance",
 };
+
+/* ------------------------------------------------------------------ */
+/* Series R — the relational (RDM) pipeline (public/data/rdm*.json).  */
+/* GridDim is declared above (consensus-axes block). */
+
+export const GRID_DIMS: GridDim[] = ["valence", "power", "arousal", "novelty"];
+export type Dim4 = Record<GridDim, number>;
+
+export interface RdmModel {
+  id: string;
+  pretty: string;
+  family: string;
+  /** Condensed lower triangle (rank-transformed distances in [0,1]),
+      pdist order over RdmFingerprints.terms. */
+  rdmLower: number[];
+}
+
+export interface RdmFingerprints {
+  terms: string[];
+  metric: string;
+  models: RdmModel[];
+  consensus: RdmModel;
+}
+
+export interface RdmCell {
+  metric: string;
+  consensus: string;
+  rsaGrid: number;
+  knnR2: Dim4;
+  splithalf: number;
+  centrality: number;
+  gridRank: number;
+  fdrSig: boolean;
+  official: boolean;
+}
+
+export interface RdmFactorial {
+  cells: RdmCell[];
+}
+
+export interface RdmAxes {
+  frames: {
+    rdm: { axisR: Dim4; unique: Dim4 };
+    gpa: { phi: Dim4; unique: Dim4 };
+  };
+  /** R7 — why the frames disagree, and how they converge. */
+  resolution: {
+    levels: Record<GridDim, { knn: number; olsOof: number; axis: number }>;
+    gridSelfAxis: Dim4;
+    heldout: {
+      rdm: number;
+      gpa: number;
+      null95: number;
+      powerRdm: number;
+      powerGpa: number;
+    };
+  };
+  null95MinAxisR: number;
+  crossLanguage: {
+    language: string;
+    nTerms: number;
+    rsaGrid: number;
+    meanAxisR: number;
+    knnR2: Dim4;
+  }[];
+}
+
+export interface RdmCommittees {
+  committees: {
+    nModels: number;
+    minAxisR: number;
+    hasWord2vec: boolean;
+    nFamilies: number;
+  }[];
+  nullBySize: {
+    arm: "real" | "shuffled";
+    nModels: number;
+    median: number;
+    q25: number;
+    q75: number;
+  }[];
+}
+
+export interface RdmSpectrum {
+  ranks: { rank: number; eigObs: number; eigNull95: number; aboveNull: boolean }[];
+  coreDims: number;
+  sharedDims: number;
+  varTop4: number;
+  note: string;
+}

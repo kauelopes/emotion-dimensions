@@ -27,8 +27,25 @@ import {
   DimensionPairStrip,
   ModelsConsensusMap,
 } from "@/components/charts/AnswerCharts";
+import {
+  RdmCommitteeSweep,
+  RdmFactorialHeat,
+  RdmFingerprintWall,
+  RdmSpectrumStrip,
+  RdmTwoReadings,
+} from "@/components/charts/RdmCharts";
 import { withBase } from "@/lib/paths";
-import type { CrossSpace, EmotionPoints, Neighbors, Stats } from "@/lib/types";
+import type {
+  CrossSpace,
+  EmotionPoints,
+  Neighbors,
+  RdmAxes,
+  RdmCommittees,
+  RdmFactorial,
+  RdmFingerprints,
+  RdmSpectrum,
+  Stats,
+} from "@/lib/types";
 import { strings } from "@/content/strings";
 
 const EmotionCloud3D = dynamic(() => import("@/components/EmotionCloud3D"), {
@@ -117,6 +134,11 @@ export function Story() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [neighbors, setNeighbors] = useState<Neighbors | null>(null);
   const [cross, setCross] = useState<CrossSpace | null>(null);
+  const [rdmFp, setRdmFp] = useState<RdmFingerprints | null>(null);
+  const [rdmFac, setRdmFac] = useState<RdmFactorial | null>(null);
+  const [rdmAx, setRdmAx] = useState<RdmAxes | null>(null);
+  const [rdmCom, setRdmCom] = useState<RdmCommittees | null>(null);
+  const [rdmSpec, setRdmSpec] = useState<RdmSpectrum | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -125,12 +147,22 @@ export function Story() {
       fetch(withBase("/data/stats.json")).then((r) => r.json()),
       fetch(withBase("/data/neighbors.json")).then((r) => r.json()),
       fetch(withBase("/data/cross_space.json")).then((r) => r.json()),
+      fetch(withBase("/data/rdmFingerprints.json")).then((r) => r.json()),
+      fetch(withBase("/data/rdmFactorial.json")).then((r) => r.json()),
+      fetch(withBase("/data/rdmAxes.json")).then((r) => r.json()),
+      fetch(withBase("/data/rdmCommittees.json")).then((r) => r.json()),
+      fetch(withBase("/data/rdmSpectrum.json")).then((r) => r.json()),
     ])
-      .then(([p, s, n, c]) => {
+      .then(([p, s, n, c, fp, fac, ax, com, spec]) => {
         setPoints(p);
         setStats(s);
         setNeighbors(n);
         setCross(c);
+        setRdmFp(fp);
+        setRdmFac(fac);
+        setRdmAx(ax);
+        setRdmCom(com);
+        setRdmSpec(spec);
       })
       .catch((e) => setError(String(e)));
   }, []);
@@ -482,8 +514,77 @@ export function Story() {
           </div>
         </Scene>
 
-        {/* 11 — gradients not clusters + semantic walk */}
-        <Scene id="gradients" step={11} title={s.gradients.title}>
+        {/* 11 — Series R: one fingerprint per model */}
+        <Scene id="rdm-fingerprints" step={11} title={s.rdm.fingerprints.title}>
+          <div className="grid gap-8 lg:grid-cols-[1fr_1.4fr]">
+            <p className="text-sm leading-relaxed text-zinc-300">
+              {s.rdm.fingerprints.text}
+            </p>
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+              {rdmFp ? (
+                <RdmFingerprintWall data={rdmFp} points={points} />
+              ) : (
+                <div className="text-xs text-zinc-600">loading…</div>
+              )}
+            </div>
+          </div>
+        </Scene>
+
+        {/* 12 — Series R: the 5x5 construction factorial */}
+        <Scene id="rdm-factorial" step={12} title={s.rdm.factorial.title}>
+          <div className="grid gap-8 lg:grid-cols-[1fr_1.3fr]">
+            <p className="text-sm leading-relaxed text-zinc-300">
+              {s.rdm.factorial.text}
+            </p>
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+              {rdmFac ? (
+                <RdmFactorialHeat data={rdmFac} />
+              ) : (
+                <div className="text-xs text-zinc-600">loading…</div>
+              )}
+            </div>
+          </div>
+        </Scene>
+
+        {/* 13 — Series R: axes in two readings + the R7 resolution */}
+        <Scene id="rdm-axes" step={13} title={s.rdm.axes.title}>
+          <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
+            {s.rdm.axes.text}
+          </p>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+            {rdmAx ? (
+              <RdmTwoReadings axes={rdmAx} />
+            ) : (
+              <div className="text-xs text-zinc-600">loading…</div>
+            )}
+          </div>
+        </Scene>
+
+        {/* 14 — Series R: committee sweep + shared spectrum */}
+        <Scene id="rdm-committees" step={14} title={s.rdm.committees.title}>
+          <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
+            {s.rdm.committees.text}
+          </p>
+          <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+              {rdmCom ? (
+                <RdmCommitteeSweep data={rdmCom} />
+              ) : (
+                <div className="text-xs text-zinc-600">loading…</div>
+              )}
+            </div>
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+              {rdmSpec ? (
+                <RdmSpectrumStrip data={rdmSpec} />
+              ) : (
+                <div className="text-xs text-zinc-600">loading…</div>
+              )}
+            </div>
+          </div>
+        </Scene>
+
+        {/* 15 — gradients not clusters + semantic walk */}
+        <Scene id="gradients" step={15} title={s.gradients.title}>
           <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
             <p className="text-sm leading-relaxed text-zinc-300">
               {s.gradients.text}
@@ -513,8 +614,8 @@ export function Story() {
           </div>
         </Scene>
 
-        {/* 12 — explore */}
-        <Scene id="explore" step={12} title={s.explore.title}>
+        {/* 16 — explore */}
+        <Scene id="explore" step={16} title={s.explore.title}>
           <p className="mb-6 max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.explore.text}
           </p>
@@ -527,8 +628,8 @@ export function Story() {
           </Lazy3D>
         </Scene>
 
-        {/* 13 — the three questions, answered */}
-        <Scene id="answers" step={13} title={s.answers.title}>
+        {/* 17 — the three questions, answered */}
+        <Scene id="answers" step={17} title={s.answers.title}>
           <p className="mb-10 max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.answers.intro}
           </p>
@@ -625,8 +726,8 @@ export function Story() {
           </div>
         </Scene>
 
-        {/* 14 — about */}
-        <Scene id="about" step={14} title={s.about.title}>
+        {/* 18 — about */}
+        <Scene id="about" step={18} title={s.about.title}>
           <p className="max-w-3xl text-sm leading-relaxed text-zinc-300">
             {s.about.text}
           </p>

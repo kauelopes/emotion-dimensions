@@ -41,9 +41,14 @@ export function DimensionalityChart({ rows }: { rows: DimensionalityRow[] }) {
 
         {rows.map((r, i) => {
           const y = TOP + i * ROW_H + ROW_H / 2;
-          const lo = Math.min(r.parallelAnalysis, r.twonn, r.mle);
-          const hi = Math.max(r.parallelAnalysis, r.twonn, r.mle);
+          const lo = Math.min(r.twonn, r.mle);
+          const hi = Math.max(r.twonn, r.mle);
           const isConsensus = r.family === "consensus";
+          // matched ruler (E12.0): the model reduced to the same 13 PCs that
+          // build the consensus. The consensus row IS a 13-feature object,
+          // so its own TwoNN already sits on that ruler.
+          const k13 = isConsensus ? r.twonn : r.twonnK13;
+          const k13Mle = isConsensus ? r.mle : r.mleK13;
           return (
             <g key={r.model}>
               {isConsensus && (
@@ -56,10 +61,6 @@ export function DimensionalityChart({ rows }: { rows: DimensionalityRow[] }) {
                 {r.pretty}
               </text>
               <line x1={sx(lo)} y1={y} x2={sx(hi)} y2={y} stroke="#52525b" strokeWidth="1" />
-              {/* parallel analysis: circle */}
-              <circle cx={sx(r.parallelAnalysis)} cy={y} r="4.5" fill="var(--accent)">
-                <title>{`${r.pretty} — parallel analysis: ${r.parallelAnalysis}`}</title>
-              </circle>
               {/* TwoNN: open diamond */}
               <rect x={sx(r.twonn) - 3.6} y={y - 3.6} width="7.2" height="7.2"
                 transform={`rotate(45 ${sx(r.twonn)} ${y})`}
@@ -71,15 +72,27 @@ export function DimensionalityChart({ rows }: { rows: DimensionalityRow[] }) {
                 fill="none" stroke="#a1a1aa" strokeWidth="1.6">
                 <title>{`${r.pretty} — MLE: ${r.mle}`}</title>
               </rect>
+              {/* TwoNN on the matched 13-PC ruler: filled diamond */}
+              {k13 !== undefined && (
+                <rect x={sx(k13) - 3.2} y={y - 3.2} width="6.4" height="6.4"
+                  transform={`rotate(45 ${sx(k13)} ${y})`}
+                  fill="var(--pos)" opacity="0.9">
+                  <title>{`${r.pretty} — TwoNN @ 13 PCs (matched ruler): ${k13}`}</title>
+                </rect>
+              )}
+              {/* MLE on the matched 13-PC ruler: filled grey diamond */}
+              {k13Mle !== undefined && (
+                <rect x={sx(k13Mle) - 3.2} y={y - 3.2} width="6.4" height="6.4"
+                  transform={`rotate(45 ${sx(k13Mle)} ${y})`}
+                  fill="#a1a1aa" opacity="0.9">
+                  <title>{`${r.pretty} — MLE @ 13 PCs (matched ruler): ${k13Mle}`}</title>
+                </rect>
+              )}
             </g>
           );
         })}
       </svg>
       <div className="mt-2 flex flex-wrap items-center gap-5 text-xs text-zinc-500">
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: "var(--accent)" }} />
-          {L.pa}
-        </span>
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-2.5 w-2.5 rotate-45 border-2" style={{ borderColor: "var(--pos)" }} />
           {L.twonn}
@@ -87,6 +100,14 @@ export function DimensionalityChart({ rows }: { rows: DimensionalityRow[] }) {
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-2.5 w-2.5 border-2 border-zinc-400" />
           {L.mle}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rotate-45" style={{ background: "var(--pos)" }} />
+          {L.twonnK13}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rotate-45 bg-zinc-400" />
+          {L.mleK13}
         </span>
       </div>
     </div>
