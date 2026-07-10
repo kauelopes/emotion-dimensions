@@ -140,7 +140,7 @@ export function Story() {
   const [rdmCom, setRdmCom] = useState<RdmCommittees | null>(null);
   const [rdmSpec, setRdmSpec] = useState<RdmSpectrum | null>(null);
   const [rdmRecovery, setRdmRecovery] = useState<GridRecoveryRow[] | null>(null);
-  const [rdmClust, setRdmClust] = useState<ClusteringRow | null>(null);
+  const [rdmClust, setRdmClust] = useState<ClusteringRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -168,7 +168,7 @@ export function Story() {
         setRdmCom(com);
         setRdmSpec(spec);
         setRdmRecovery(rec.rows);
-        setRdmClust(clu);
+        setRdmClust(clu.rows);
       })
       .catch((e) => setError(String(e)));
   }, []);
@@ -570,8 +570,8 @@ export function Story() {
               {s.gradients.text}
             </p>
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-              {stats && rdmClust ? (
-                <SilhouetteStrip rows={[...stats.clustering, rdmClust]} />
+              {rdmClust ? (
+                <SilhouetteStrip rows={rdmClust} />
               ) : (
                 <div className="text-xs text-zinc-600">loading…</div>
               )}
@@ -675,8 +675,8 @@ export function Story() {
                   {s.answers.q3.text}
                 </p>
                 <div>
-                  {stats && rdmClust ? (
-                    <SilhouetteStrip rows={[...stats.clustering, rdmClust]} />
+                  {rdmClust ? (
+                    <SilhouetteStrip rows={rdmClust} />
                   ) : (
                     <div className="text-xs text-zinc-600">loading…</div>
                   )}
